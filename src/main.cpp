@@ -1,6 +1,5 @@
-#include "raylib.h"
 #include "ui_palette.hpp"
-
+#include "raylib.h"
 int main(void)
 {
 
@@ -14,7 +13,7 @@ int main(void)
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //Font f = LoadFont(".ttf");
-    UI_Palette uipal({"asset/nanner-32-1x.png","asset/sheltzy32-1x.png"});
+    UI_Palette uipal = UI_Palette();
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         //if(IsKeyDown(KEY_S))
@@ -22,7 +21,6 @@ int main(void)
         BeginDrawing();
         ClearBackground(BLUE);
         uipal.Draw();
-        
         EndDrawing();
     }
    // UnloadModel(model);

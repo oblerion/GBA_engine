@@ -25,6 +25,11 @@ Palette PaletteManager::Get(int id)
     return Palette("");
 }
 
+void PaletteManager::Del(int id)
+{
+    list.erase(list.begin()+id);
+}
+
 JsonObject PaletteManager::GetJson()
 {
     JsonObject json;

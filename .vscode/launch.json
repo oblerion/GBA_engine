@@ -6,7 +6,7 @@
     "configurations": [      
         {
             "name" : "compile",
-            "command" : "./make && if [ -f main ];then ./main ;fi",
+            "command" : "make",
             "type" : "node-terminal",
             "request": "launch"
         }
