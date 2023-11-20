@@ -46,11 +46,54 @@ void UI_Palette::_DropLoad()
         FilePathList files = LoadDroppedFiles();
         for(unsigned int i=0;i<files.count;i++)
         {
-            puts(files.paths[i]);
-            palman.Add(files.paths[i]);
+            const char* ext = GetFileExtension(files.paths[i]);
+            if(TextIsEqual(ext,".json"))
+            {
+                JsonObject jobj(files.paths[i]);
+                JsonObject jobj2 = jobj.GetObject("palettes");
+                jobj.Print();
+                printf("%d size\n",jobj2.GetNbObject());
+                for(int j=0;j<=jobj2.GetNbObject();j++)
+                    palman.Add(jobj2.GetObject(TextFormat("%d",j)));
+            }
+            else if(TextIsEqual(ext,".png"))
+            {
+                palman.Add(files.paths[i]);
+            }
+            else if(TextIsEqual(ext,".dat"))
+            {
+                struct sdata sdata;
+                FILE* fic = fopen(files.paths[i],"rb");
+                fread(&sdata,sizeof(struct sdata),1,fic);
+                fclose(fic);
+                palman.Clear();
+                for(int j=0;j<5;j++)
+                {
+                    struct spalette pal = sdata.mpalette.list[j];
+                    if(strlen(pal.name)>0)
+                    {
+                        palman.Add(pal);
+                    }
+                }
+            }
         }
         UnloadDroppedFiles(files);
     }
+}
+
+void UI_Palette::_Save(const char *pfile)
+{
+    struct sdata sdata;
+    if(FileExists(pfile))
+    {   
+        FILE* fic = fopen(pfile,"rb");
+        fread(&sdata,sizeof(struct sdata),1,fic);
+        fclose(fic);
+    }
+    sdata.mpalette = palman.GetStruct();
+    FILE* fic = fopen(pfile,"wb");
+    fwrite(&sdata,sizeof(struct sdata),1,fic);
+    fclose(fic);
 }
 
 UI_Palette::UI_Palette()
@@ -85,9 +128,16 @@ int UI_Palette::Draw()
     // UI button,scroll
     if(GuiButton({5,5,50,30},"back"))
     {
-        return 1;
+        ret=1;
     }
-    
+    if(GuiButton({60,5,50,30},"save"))
+    {
+        ret=2;
+        // JsonObject jobj;
+        // jobj.SetObject("palettes",palman.GetJson());
+        // jobj.WriteFile("save.json");
+        _Save("save.dat");
+    }
 
     if(palman.Size()>0)
     {

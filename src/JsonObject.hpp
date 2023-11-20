@@ -2,6 +2,7 @@
 #define JSONOBJECT_HPP
 #include <cstdarg>
 #include <cmath>
+#include <cstring>
 #include <vector>
 #include <string>
 

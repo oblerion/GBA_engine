@@ -17,18 +17,26 @@ Palette::Palette(const char *pfile)
     {
         Image img = LoadImage(pfile);
         palette.clear();
+        palette.push_back(ColorToInt({0,0,0,0}));
         for(int i=0;i<img.width;i++)
         {        
             Color col = GetImageColor(img,i,0);
             palette.push_back(ColorToInt(col));
-        }
+        } 
         UnloadImage(img);
     }
 }
 
+Palette::Palette(struct spalette spalette)
+{
+    name = spalette.name;
+    for(int i=0;i<33;i++)
+        palette.push_back(spalette.data[i]);
+}
+
 Color Palette::Get(int id)
 {
-    if(id<0 || id>palette.size()) return WHITE;
+    if(id<0 || id>(signed int)(palette.size())) return WHITE;
     return GetColor(palette[id]);
 }
 
@@ -39,7 +47,7 @@ std::string Palette::GetName()
 
 int Palette::GetHexa(int id)
 {
-    if(id<0 || id>palette.size()) return ColorToInt(WHITE);
+    if(id<0 || id>(signed int)palette.size()) return ColorToInt(WHITE);
     return palette[id];
 }
 
@@ -51,14 +59,28 @@ int Palette::Size()
 JsonObject Palette::GetJson()
 {
     JsonObject jobj;
+    puts(name.c_str());
     jobj.SetString("name",name);
     jobj.SetArray("data",palette);
+    jobj.Print();
     return jobj;
+}
+
+struct spalette Palette::GetStruct()
+{
+    struct spalette spalette;
+    strcpy(spalette.name,name.c_str());
+    spalette.data[0]=ColorToInt({0,0,0,0});
+    for(int i=1;i<33;i++)
+    {
+        spalette.data[i]=palette[i-1];
+    }
+    return spalette;
 }
 
 void Palette::Draw(int x,int y)
 {
-    for(int i=0;i<palette.size();i++)
+    for(int i=0;i<(signed int)palette.size();i++)
     {
         DrawRectangle(x+(i*20),y,20,20,GetColor(palette[i]));
     }

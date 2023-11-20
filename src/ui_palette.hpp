@@ -10,6 +10,7 @@ class UI_Palette
     PaletteManager palman;
     int idscroll;
     void _DropLoad();
+    void _Save(const char* pfile);
     public:
     UI_Palette();
     UI_Palette(std::vector<std::string> lstfile);

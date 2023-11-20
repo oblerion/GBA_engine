@@ -9,35 +9,17 @@ const char* TextFormat(const char *__restrict __format, ...)
     va_end(args);
     return s;
 }
-int FileExists(const char* file)
+bool FileExists(const char* file)
 {
     FILE* fic = fopen(file,"r");
     if(fic!=NULL)
     {
         fclose(fic);
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
-char* LoadFileText(const char* file)
-{
-    FILE* fic = fopen(file,"r");
-    if(fic!=NULL)
-    {
-        fseek(fic,0,SEEK_END);
-        int pos = ftell(fic);
-        fseek(fic,0,SEEK_SET);
-        char* s = (char*)malloc(sizeof(char)*pos);
-        for(int i=0;i<pos;i++)
-        {
-            char c = fgetc(fic);
-            sprintf(s,"%s%c",s,c);
-        }
-        fclose(fic);
-        return s;
-    }
-    return NULL;
-}
+
 JsonObject::JsonObject()
 {}
 
@@ -49,76 +31,73 @@ JsonObject::JsonObject(std::string sfile)
     int i_tps=0;
     std::string data;
     data = _readFile(sfile);
-
-    if(data.length()==0)
+    if(!FileExists(sfile.c_str()))//data.length()==0)
     {
         data = sfile;
     }
-    else
+    data = _filter(data);
+    if(data[0]=='{')
     {
-        data = _filter(data);
-        if(data[0]=='{')
+        data = _extract(data,'{','}');
+        for(unsigned int i=0;i<data.length();i++)
         {
-            data = _extract(data,'{','}');
-            for(unsigned int i=0;i<data.length();i++)
+            switch(data[i])
             {
-                switch(data[i])
-                {
-                    case '[':
-                        in_array++;
-                    break;
-                    case '{':
-                        in_obj++;
-                    break;
-                    case ']':
-                        in_array--;
-                    break;
-                    case '}':
-                        in_obj--;
-                    break;
-                    case ',':
-                        if(in_array<=0 && in_obj<=0)
-                        {
-                            ldata.push_back(data.substr(i_tps,i-i_tps));
-                            i_tps = i+1;
-                        }
-                    break;
-                }
-                if(i==data.length()-1)
-                {
-                    ldata.push_back(data.substr(i_tps,i-i_tps+1));
-                }
-            }
-
-            for(unsigned int i=0;i<ldata.size();i++)
-            {
-                std::string s2 = ldata[i];
-                if(s2[0]=='"')
-                {
-                    std::string name = _extract(s2,'"','"');
-                    std::string value = _extract(s2,':');
-                    if(value!="")
+                case '[':
+                    in_array++;
+                break;
+                case '{':
+                    in_obj++;
+                break;
+                case ']':
+                    in_array--;
+                break;
+                case '}':
+                    in_obj--;
+                break;
+                case ',':
+                    if(in_array<=0 && in_obj<=0)
                     {
-                        if(value[0]=='"')
-                            _addString(name,value);
-                        else if(value[0]=='{')
-                        {
-                            //_list_obj_key
-                            _addObject(name,value);
-                        }
-                        else if(value[0]=='[')
-                        {
-                            _addArray(name,value);
-                        }
-                        else if(value=="true" || value=="false")
-                        {
-                            _addBool(name,value);
-                        }
-                        else
-                        {
-                            _addInt(name,value);
-                            _addFloat(name,value);
-                        }
+                        ldata.push_back(data.substr(i_tps,i-i_tps));
+                        i_tps = i+1;
+                    }
+                break;
+            }
+            if(i==data.length()-1)
+            {
+                ldata.push_back(data.substr(i_tps,i-i_tps+1));
+            }
+        }
+
+        for(unsigned int i=0;i<ldata.size();i++)
+        {
+            std::string s2 = ldata[i];
+            if(s2[0]=='"')
+            {
+                std::string name = _extract(s2,'"','"');
+                std::string value = _extract(s2,':');
+                if(value!="")
+                {
+                    if(value[0]=='"')
+                        _addString(name,value);
+                    else if(value[0]=='{')
+                    {
+                        //_list_obj_key
+                        _addObject(name,value);
+                        printf("name %s value %s\n",name.c_str(),value.c_str());
+                    }
+                    else if(value[0]=='[')
+                    {
+                        _addArray(name,value);
+                    }
+                    else if(value=="true" || value=="false")
+                    {
+                        _addBool(name,value);
+                    }
+                    else
+                    {
+                        _addInt(name,value);
+                        _addFloat(name,value);
                     }
                 }
             }
@@ -288,7 +267,23 @@ std::string JsonObject::_readFile(std::string sfile)
 {
     if(sfile!="" && FileExists(sfile.c_str()))
     {
-        return LoadFileText(sfile.c_str());
+        std::string str="";
+        FILE* fic = fopen(sfile.c_str(),"r");
+        if(fic!=NULL)
+        {
+            fseek(fic,0,SEEK_END);
+            int pos = ftell(fic);
+            fseek(fic,0,SEEK_SET);
+            for(int i=0;i<pos;i++)
+            {
+                char c = fgetc(fic);
+                if(str.length()>0)
+                    str+=c;
+                else str=c;
+            }
+            fclose(fic);
+        }
+        return str;
     }
     return "";
 }
@@ -314,12 +309,6 @@ std::string JsonObject::_filter(std::string s)
     for(unsigned int i=0;i<s.length();i++)
     {
         lc = s[i];
-        if(lc!=' ' &&
-            lc!='\n' &&
-            lc!='\b' &&
-            lc!='\r' &&
-            lc!='\t')
-            ls+=s.substr(i,1);
         if(lc=='"')
         {
             if(in_string)
@@ -328,7 +317,13 @@ std::string JsonObject::_filter(std::string s)
                 in_string = true;
         }
         if(lc==' ' && in_string)
-             ls+=s.substr(i,1);
+            ls+=lc;
+        else if(lc!='\n' &&
+            lc!='\b' &&
+            lc!='\r' &&
+            lc!='\t')
+            ls+=lc;
+    
     }
     return ls;
 }
@@ -577,12 +572,13 @@ void JsonObject::SetObject(std::string key, JsonObject value)
     for(unsigned int i=0;i<_dj_keys.size();i++)
     {
         if(_dj_keys[i]==key){
-            _dj[i] = *(new JsonObject(value.ToString()));
+            //JsonObject jobj(value.ToString());
+            _dj[i] = value;
             return;
         }
     }
 	_dj_keys.push_back(key);
-	_dj.push_back( *(new JsonObject(value.ToString())));
+	_dj.push_back(value);
 
 }
 void JsonObject::SetBool(std::string key, bool value)

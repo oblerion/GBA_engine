@@ -1,4 +1,5 @@
 #include "ui_palette.hpp"
+#include "JsonObject.hpp"
 #include "raylib.h"
 int main(void)
 {
@@ -11,9 +12,10 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
 
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+    SetTargetFPS(50);   // Set our game to run at 60 frames-per-second
     //Font f = LoadFont(".ttf");
-    UI_Palette uipal = UI_Palette();
+    UI_Palette uipal;
+ // probl:load json more one element
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         //if(IsKeyDown(KEY_S))
@@ -21,6 +23,7 @@ int main(void)
         BeginDrawing();
         ClearBackground(BLUE);
         uipal.Draw();
+
         EndDrawing();
     }
    // UnloadModel(model);

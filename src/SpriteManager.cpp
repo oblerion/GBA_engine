@@ -23,7 +23,7 @@ void SpriteManager::Add(JsonObject json)
 
 Sprite SpriteManager::Get(int id)
 {
-    if(id<0 && id>list.size())
+    if(id<0 && id>(signed int)list.size())
         return list[id];
     return Sprite();
 }
@@ -31,7 +31,7 @@ Sprite SpriteManager::Get(int id)
 JsonObject SpriteManager::GetJson()
 {
     JsonObject json;
-    for(int i=0;i<list.size();i++)
+    for(int i=0;i<(signed int)list.size();i++)
     {
         json.SetObject(TextFormat("%d",i),list[i].GetJson());
     }
