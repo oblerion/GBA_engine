@@ -4,15 +4,6 @@ PaletteManager::PaletteManager()
 {
 }
 
-void PaletteManager::Add(JsonObject pjson)
-{
-    if(pjson.IsEmpty()==false)
-    {
-        Palette pa(pjson);
-        list.push_back(pa);
-    }
-}
-
 void PaletteManager::Add(const char *pfile)
 {
     Palette pa(pfile);
@@ -43,22 +34,14 @@ void PaletteManager::Clear()
 {
     list.clear();
 }
-JsonObject PaletteManager::GetJson()
-{
-    JsonObject json;
-    for(int i=0;i<(signed int)list.size();i++)
-    {
-        json.SetObject(TextFormat("%d",i),list[i].GetJson());
-    }
-    return json;
-}
 
 struct smpalette PaletteManager::GetStruct()
 {
     struct smpalette smpalette;
-    for(int i=0;i<(signed int)list.size();i++)
+    smpalette.nb_palette=(signed int)list.size();
+    for(int i=0;i<5;i++)
     {
-        if(i<5)
+        if(i< smpalette.nb_palette)
             smpalette.list[i] = list[i].GetStruct();
     }
     return smpalette;

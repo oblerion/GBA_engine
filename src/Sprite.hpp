@@ -4,21 +4,22 @@
 #include "Palette.hpp"
 #include <vector>
 #include <string>
+#include "data_type.hpp"
 class Sprite
 {
     private:
-    Texture2D texture;
+    // Texture2D texture;
+    int palette_id;
     Vector2 pos;
     Vector2 size;
     std::vector<int> ldata;
     public:
-    std::string name;
     Sprite(const char* pfile,Palette pal);
-    Sprite(JsonObject json);
+    Sprite(struct ssprite ssprite);
     Sprite();
     ~Sprite();
-    JsonObject GetJson();
     void SetData(int x,int y,Color col);
-    void UpdateTexture();
+    struct ssprite GetStruct();
+    // void UpdateTexture();
 };
 #endif

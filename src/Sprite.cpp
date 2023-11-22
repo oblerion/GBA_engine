@@ -2,23 +2,15 @@
 
 Sprite::Sprite()
 {
-    name = "sprite";
+    palette_id=0;
     pos.x = 0;
     pos.y = 0;
     size.x = 16;
     size.y = 16;
-    for(int i=0;i<16;i++)
+    for(int i=0;i<size.x*size.y;i++)
     {
         ldata.push_back(0);
     }
-}
-
-Sprite::Sprite(JsonObject json)
-{
-    size.x = json.GetInt("width");
-    size.y = json.GetInt("height");
-    name = json.GetString("name");
-    ldata = json.GetArray("data");
 }
 
 Sprite::Sprite(const char *pfile, Palette pal)
@@ -27,7 +19,6 @@ Sprite::Sprite(const char *pfile, Palette pal)
     pos.x = 0;
     pos.y = 0;
     const char* cext = GetFileExtension(pfile);
-    name = GetFileNameWithoutExt(pfile);
     if(TextIsEqual(cext,".png"))
     {
         img = LoadImage(pfile);
@@ -55,28 +46,43 @@ Sprite::Sprite(const char *pfile, Palette pal)
     }
 }
 
+Sprite::Sprite(struct ssprite ssprite)
+{
+    size.x = ssprite.width;
+    size.y = ssprite.height;
+    pos.x=0;
+    pos.y=0;
+    ldata.clear();
+    for(int i=0;i<ssprite.width*ssprite.height;i++)
+    {
+        ldata.push_back(ssprite.data[i]);
+    }
+}
+
 Sprite::~Sprite()
 {
     ldata.clear();
-    UnloadTexture(texture);
+    // UnloadTexture(texture);
 }
 
-JsonObject Sprite::GetJson()
-{
-    JsonObject jspr;
-    jspr.SetInt("width",size.x);
-    jspr.SetInt("height",size.y);
-    jspr.SetString("name",name);
-    jspr.SetArray("data",ldata);
-    return jspr;
-}
 
 void Sprite::SetData(int x, int y, Color col)
 {
     ldata[(y*size.x)+x]=ColorToInt(col);
 }
 
-void Sprite::UpdateTexture()
+struct ssprite Sprite::GetStruct()
 {
+    struct ssprite ssprite;
+    ssprite.width=size.x;
+    ssprite.height=size.y;
+    
+    for(int i=0;i<(signed int)ldata.size();i++)
+    {
+        ssprite.data[i]=ldata[i];
+    }
+
+    return ssprite;
 
 }
+

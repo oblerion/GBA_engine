@@ -4,6 +4,16 @@ SpriteManager::SpriteManager()
 {
 }
 
+SpriteManager::SpriteManager(smsprite smsprite)
+{
+    list.clear();
+    for(int i=0;i<smsprite.nb_sprite;i++)
+    {
+        Sprite spr(smsprite.list[i]);
+        list.push_back(spr);
+    }
+}
+
 SpriteManager::~SpriteManager()
 {
     list.clear();
@@ -15,12 +25,6 @@ void SpriteManager::Add(const char *pfile,Palette pal)
     list.push_back(spr);
 }
 
-void SpriteManager::Add(JsonObject json)
-{
-    Sprite spr(json);
-    list.push_back(spr);
-}
-
 Sprite SpriteManager::Get(int id)
 {
     if(id<0 && id>(signed int)list.size())
@@ -28,12 +32,14 @@ Sprite SpriteManager::Get(int id)
     return Sprite();
 }
 
-JsonObject SpriteManager::GetJson()
+struct smsprite SpriteManager::GetStruct()
 {
-    JsonObject json;
-    for(int i=0;i<(signed int)list.size();i++)
+    struct smsprite smsprite;
+    smsprite.nb_sprite = (signed int)list.size();
+    for(int i=0;i<smsprite.nb_sprite;i++)
     {
-        json.SetObject(TextFormat("%d",i),list[i].GetJson());
+        smsprite.list[i] = list[i].GetStruct();
     }
-    return json;
+
+    return smsprite;
 }

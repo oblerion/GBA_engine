@@ -4,16 +4,17 @@
 #include "Sprite.hpp"
 #include "Palette.hpp"
 #include <vector>
+#include "data_type.hpp"
 class SpriteManager
 {
     private:
     std::vector<Sprite> list;
     public:
     SpriteManager();
+    SpriteManager(struct smsprite smsprite);
     ~SpriteManager();
     void Add(const char* pfile,Palette pal);
-    void Add(JsonObject json);
     Sprite Get(int id);
-    JsonObject GetJson();
+    struct smsprite GetStruct();
 };
 #endif
