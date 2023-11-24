@@ -1,4 +1,4 @@
-#include "ui.hpp"
+#include "ui.h"
 #include "math.h"
 
 int MATH_collide(int x,int y,int w,int h,int x2,int y2,int w2,int h2)
@@ -117,7 +117,7 @@ void UI_TEXTZONE_free(struct UI_TEXTZONE* textzone)
 struct UI_TEXTINPUT UI_TEXTINPUT(int x, int y, char *text, int size_font, Color color)
 {
     struct UI_TEXTINPUT uitextinput={
-        x,y,0,0,0,size_font,{0},color,true
+        x,y,0,0,0,size_font,NULL,color,true
     };
     uitextinput.text = (char*)malloc(UI_TEXTINPUT_MAXCHAR);
     strcpy(uitextinput.text,text);

@@ -1,4 +1,4 @@
-#include "kbd_layout.hpp"
+#include "kbd_layout.h"
 // 30 layout, 300 key with 4 int (input,base,shift,alt)
 // input is on qwerty us keyboard 
 #define MAX_LAYOUT 30

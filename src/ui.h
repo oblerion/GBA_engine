@@ -1,9 +1,9 @@
-#ifndef UI_HPP
-#define UI_HPP
+#ifndef UI_H
+#define UI_H
 #include <stdio.h>
 #include <stdlib.h>
 #include "raylib.h"
-#include "kbd_layout.hpp"
+#include "kbd_layout.h"
 #include <string.h>
 struct UI_BUTTON
 {

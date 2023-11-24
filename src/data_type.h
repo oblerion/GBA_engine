@@ -1,10 +1,10 @@
-#ifndef DATA_TYPE_HPP
-#define DATA_TYPE_HPP
+#ifndef DATA_TYPE_H
+#define DATA_TYPE_H
 
 #define MAX_COLOR 32
 struct spalette
 {
-    char name[20];
+    char name[35];
     int data[MAX_COLOR];
 };
 

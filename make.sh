@@ -1,16 +1,16 @@
 #!/bin/bash
 DSRC="src/"
 
-CC=clang++
+CC=clang
 CFLAGS="-g -Wall -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"
 INC=" " 
 EXEC="main"
 DOBJ="build/linux64/obj/"
 
-RAYLIBWIN="/home/desnot/GD/raylib-4.5.0_win32_mingw-w64"
-RAYLIBWEB="/home/desnot/GD/raylib-4.5.0_webassembly"
-CC2=i686-w64-mingw32-g++
-CFLAGS2="-g -Wall -lm -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc -static-libstdc++"
+RAYLIBWIN="/home/desnot/GD/raylib-5.0_win32_mingw-w64"
+RAYLIBWEB="/home/desnot/GD/raylib-5.0_webassembly"
+CC2=i686-w64-mingw32-gcc
+CFLAGS2="-g -Wall -lm -L${RAYLIBWIN}/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -static-libgcc"
 INC2="-I${RAYLIBWIN}/include -I/usr/i696-w64-mingw32/include"
 EXEC2="main.exe"
 DOBJ2="build/win86/obj/"
@@ -33,8 +33,8 @@ function init()
 function comp(){
 	local out;
 	cd $DSRC
-	for i in *.cpp ;do
-		out="$TDOBJ${i:0:-4}.o"
+	for i in *.c ;do
+		out="$TDOBJ${i:0:-2}.o"
 		rm -f $out;
 		echo rm -f $out;
 		command $TCC -c $i $TINC -g -Wall -o ../$out;
