@@ -2,24 +2,28 @@
 
 struct Palette PaletteF(const char *pfile)
 {
-    struct Palette pal;
+    struct Palette pal={"",{0}};
     const char* cext = GetFileExtension(pfile);
-    Image fullimage = GenImageColor(32*20,20,BLACK);
+    // Image fullimage = GenImageColor(DT_MAX_COLOR*20,20,BLACK);
     if(TextIsEqual(cext,".png"))
     {
-        strcpy(pal.name,GetFileNameWithoutExt(pfile));
+        
         Image img = LoadImage(pfile);
         //palette.clear();
-        for(int i=0;i<img.width;i++)
-        {        
-            Color col = GetImageColor(img,i,0);
-            pal.palette[i]=ColorToInt(col);
-            ImageDrawRectangle(&fullimage,i*20,0,20,20,col);
-        } 
+        if(img.width==32 && img.height==1)
+        {
+            strcpy(pal.name,GetFileNameWithoutExt(pfile));
+            for(int i=0;i<img.width;i++)
+            {        
+                Color col = GetImageColor(img,i,0);
+                pal.palette[i]=ColorToInt(col);
+                // ImageDrawRectangle(&fullimage,i*20,0,20,20,col);
+            }
+        }
         UnloadImage(img);
     }
-    pal.texture = LoadTextureFromImage(fullimage);
-    UnloadImage(fullimage);
+    // pal.texture = LoadTextureFromImage(fullimage);
+    // UnloadImage(fullimage);
     return pal;
 }
 
@@ -27,14 +31,14 @@ struct Palette PaletteD(struct spalette spalette)
 {
     struct Palette pal;
     strcpy(pal.name,spalette.name);
-    Image img = GenImageColor(32*20,20,BLACK);
-    for(int i=0;i<32;i++)
+    // Image img = GenImageColor(DT_MAX_COLOR*20,20,BLACK);
+    for(int i=0;i<DT_MAX_COLOR;i++)
     {
         pal.palette[i]=spalette.data[i];
-        ImageDrawRectangle(&img,i*20,0,20,20,GetColor(spalette.data[i]));
+        // ImageDrawRectangle(&img,i*20,0,20,20,GetColor(spalette.data[i]));
     }
-    pal.texture = LoadTextureFromImage(img);
-    UnloadImage(img);
+    // pal.texture = LoadTextureFromImage(img);
+    // UnloadImage(img);
     return pal;
 }
 
@@ -64,19 +68,29 @@ struct spalette Palette_GetStruct(struct Palette pal)
 {
     struct spalette spalette;
     strcpy(spalette.name,pal.name);
-    for(int i=0;i<32;i++)
+    for(int i=0;i<DT_MAX_COLOR;i++)
     {
         spalette.data[i]=pal.palette[i];
     }
     return spalette;
 }
 
-void Palette_Draw(struct Palette pal, int x, int y)
+Image Palette_GetImg(struct Palette pal)
 {
-    DrawTexture(pal.texture,x,y,WHITE);
+    Image img = GenImageColor(32,1,BLACK);
+    for(int i=0;i<DT_MAX_COLOR;i++)
+    {
+        ImageDrawPixel(&img,i,0,GetColor(pal.palette[i]));
+    }
+    return img;
 }
 
-void Palette_Free(struct Palette *pal)
-{
-    UnloadTexture(pal->texture);
-}
+// void Palette_Draw(struct Palette pal, int x, int y)
+// {
+//     DrawTexture(pal.texture,x,y,WHITE);
+// }
+
+// void Palette_Free(struct Palette *pal)
+// {
+//     UnloadTexture(pal->texture);
+// }

@@ -3,58 +3,93 @@
 struct UI_Palette UI_Palette()
 {
     struct UI_Palette uipal={
-        PaletteManager(),
-        UI_BUTTON(19*32,0,"delete",18,BLACK),
-        UI_SLIDEBAR_V(GetScreenWidth()-20,10,5)
+        UI_BUTTON(19*32,0,"delete",18,BLACK)
     };
+    for(int i=0;i<DT_MAX_PALETTE;i++)
+        strcpy(uipal.palettes[i].name,"");
+    Image img = GenImageColor(32,5,BLACK);
+    uipal.texture = LoadTextureFromImage(img);
+    UnloadImage(img);
     return uipal;
 }
 void UI_palette_LoadF(struct UI_Palette* uipal,const char* pfile)
 {
     if(TextIsEqual(GetFileExtension(pfile),".png"))
     {
-        PaletteManager_AddF(&uipal->palman,pfile);
+        for(int i=0;i<DT_MAX_PALETTE;i++)
+        {
+            if(strlen(uipal->palettes[i].name)==0)
+            {
+                uipal->palettes[i] = PaletteF(pfile);
+                Atlas_UpdatePalette(uipal->texture,uipal->palettes);
+                break;
+            }
+        }
     }
 }
 void UI_Palette_LoadD(struct UI_Palette* uipal,struct sdata sdata)
 {
-    for(int j=0;j<sdata.mpalette.nb_palette;j++)
+    for(int j=0;j<DT_MAX_PALETTE;j++)
     {
-        struct spalette pal = sdata.mpalette.list[j];
-        PaletteManager_AddD(&uipal->palman,pal);
+        uipal->palettes[j] = PaletteD(sdata.list_pal[j]);
     }
+    Atlas_UpdatePalette(uipal->texture,uipal->palettes);
 }
-void UI_Palette_Save(struct UI_Palette uipal,struct sdata* sdata)
+void UI_Palette_Save(struct UI_Palette uipal, struct sdata* sdata)
 {
-    sdata->mpalette = PaletteManager_GetStruct(uipal.palman);
+    for(int i=0;i<DT_MAX_PALETTE;i++)
+    {
+        sdata->list_pal[i] = Palette_GetStruct(uipal.palettes[i]);
+    }
 }
 struct Palette UI_Palette_Get(struct UI_Palette uipal,int id)
 {
-    return PaletteManager_Get(uipal.palman,id);
+    return uipal.palettes[id];
 }
 int UI_Palette_Draw(struct UI_Palette* uipal)
 {
     int ret=-1;
     const int yborder = 30;
     // UI button,scroll
-
-    if(PaletteManger_Size(uipal->palman)>0)
+    int nbpalette=0;
+    for(int i=0;i<DT_MAX_PALETTE;i++)
     {
-        UI_SLIDEBAR_V_draw(&uipal->slider);
-        for(int j=uipal->slider.pos;j<PaletteManger_Size(uipal->palman);j++)
+        if(strlen(uipal->palettes[i].name)>0) nbpalette++;
+    }
+
+    if(nbpalette>0)
+    {
+        for(int j=0;j<DT_MAX_PALETTE;j++)
         {
-            int pos= j-uipal->slider.pos;
-            if(pos<6 && pos>=0)
+            if(strlen(uipal->palettes[j].name)>0)
             {
-                PaletteManager_Draw(uipal->palman,j,23,yborder+23+(pos*45));
-                DrawText(PaletteManager_GetName(uipal->palman,j),5,yborder+(pos*45)+5,17,BLACK);
-                if(CheckCollisionPointRec(GetMousePosition(), (Rectangle){23,(float)yborder+23+(pos*45),32*20,20}))
+                Atlas_DrawPalette(uipal->texture,j,23,yborder+23+(j*45),20);
+                DrawText(uipal->palettes[j].name,5,yborder+(j*45)+5,17,BLACK);
+                if(CheckCollisionPointRec(GetMousePosition(), (Rectangle){23,(float)yborder+23+(j*45),32*20,20}))
                 {
-                    uipal->btndelete.y=yborder+21+(pos*45)+2;
+                    uipal->btndelete.y=yborder+21+(j*45)+2;
                     if(UI_BUTTON_draw(&uipal->btndelete))
                     {
-                        PaletteManager_Del(&uipal->palman,j);
+                        //PaletteManager_Del(&uipal->palman,j);
+                        strcpy(uipal->palettes[j].name,"");
+                        for(int i=0;i<DT_MAX_COLOR;i++)
+                        {
+                            uipal->palettes[j].palette[i]=ColorToInt(BLACK);
+                        }
                     }
+                }
+            }
+            else if(j+1<DT_MAX_PALETTE)
+            {
+                if( strlen(uipal->palettes[j+1].name)>0)
+                {
+                    uipal->palettes[j] = uipal->palettes[j+1];
+                    strcpy(uipal->palettes[j+1].name,"");
+                    for(int i=0;i<DT_MAX_COLOR;i++)
+                    {
+                        uipal->palettes[j+1].palette[i]=ColorToInt(BLACK);
+                    }
+                    Atlas_UpdatePalette(uipal->texture,uipal->palettes);
                 }
             }
         }
@@ -66,7 +101,7 @@ int UI_Palette_Draw(struct UI_Palette* uipal)
     return ret;
 }
 
-void UI_Palette_Free(struct UI_Palette *uipal)
+void UI_Palette_Free(struct UI_Palette uipal)
 {
-    PaletteManager_Free(&uipal->palman);
+    UnloadTexture(uipal.texture);
 }

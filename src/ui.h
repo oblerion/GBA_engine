@@ -5,6 +5,7 @@
 #include "raylib.h"
 #include "kbd_layout.h"
 #include <string.h>
+int MATH_collide(int x,int y,int w,int h,int x2,int y2,int w2,int h2);
 struct UI_BUTTON
 {
     int x;
@@ -19,6 +20,19 @@ struct UI_BUTTON
 };
 struct UI_BUTTON UI_BUTTON(int x,int y,const char* name,int size_font,Color color);
 bool UI_BUTTON_draw(struct UI_BUTTON* uibutton);
+
+struct UI_BUTTONCOLOR
+{
+    int x;
+    int y;
+    int size;
+    Color color;
+    bool select;
+    bool visible;
+};
+struct UI_BUTTONCOLOR UI_BUTTONCOLOR(int x,int y,int size,Color color);
+bool UI_BUTTONCOLOR_Update(struct UI_BUTTONCOLOR* uibuttoncolor);
+bool UI_BUTTONCOLOR_Draw(struct UI_BUTTONCOLOR* uibuttoncolor);
 
 struct UI_TEXTFIELD
 {
@@ -78,9 +92,11 @@ struct UI_SLIDEBAR_V
     int nb_pos_max;
     int pos;
     Color color;
+    int width;
+    int height;
     bool visible;
 };
-struct UI_SLIDEBAR_V UI_SLIDEBAR_V(int x,int y,int pos_max);
+struct UI_SLIDEBAR_V UI_SLIDEBAR_V(int x,int y,int width,int height,int pos_max);
 void UI_SLIDEBAR_V_resize(struct UI_SLIDEBAR_V* bar, int pos_max);
 bool UI_SLIDEBAR_V_draw(struct UI_SLIDEBAR_V* bar);
 

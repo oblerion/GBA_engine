@@ -22,8 +22,6 @@ struct UI_BUTTON UI_BUTTON(int x, int y, const char *name, int size_font, Color 
     uibutton.height = size_font+4;
     return uibutton;
 }
-
-
 bool UI_BUTTON_draw(struct UI_BUTTON *uibutton)
 {
     bool lbool = false;
@@ -38,6 +36,46 @@ bool UI_BUTTON_draw(struct UI_BUTTON *uibutton)
         }
         if(uibutton->outline)DrawRectangleLines(uibutton->x-4,uibutton->y-2,uibutton->width,uibutton->height,lcol);
         DrawText(uibutton->name,uibutton->x,uibutton->y,uibutton->size_font,lcol);
+    }
+    return lbool;
+}
+
+struct UI_BUTTONCOLOR UI_BUTTONCOLOR(int x, int y, int size, Color color)
+{
+    struct UI_BUTTONCOLOR uibtncool = {x,y,size,color,false,true};
+    return uibtncool;
+}
+
+bool UI_BUTTONCOLOR_Update(struct UI_BUTTONCOLOR *uibuttoncolor)
+{
+    if(MATH_collide(GetMouseX(),GetMouseY(),1,1,
+            uibuttoncolor->x-4,uibuttoncolor->y-2,uibuttoncolor->size,uibuttoncolor->size)==1)
+    {
+        if(IsMouseButtonPressed(0)) return true;
+    }
+    return false;
+}
+
+bool UI_BUTTONCOLOR_Draw(struct UI_BUTTONCOLOR *uibuttoncolor)
+{
+    bool lbool = false;
+    if(uibuttoncolor->visible)
+    {
+        if(MATH_collide(GetMouseX(),GetMouseY(),1,1,
+            uibuttoncolor->x,uibuttoncolor->y,uibuttoncolor->size,uibuttoncolor->size)==1)
+        {
+            uibuttoncolor->color.a = 150;
+            if(IsMouseButtonPressed(0)) lbool = true;
+        }
+        else 
+            uibuttoncolor->color.a = 255;
+        DrawRectangle(uibuttoncolor->x,uibuttoncolor->y,uibuttoncolor->size,uibuttoncolor->size,uibuttoncolor->color);
+        if(uibuttoncolor->select) 
+        {
+            DrawRectangleLines(uibuttoncolor->x+1,uibuttoncolor->y+1,uibuttoncolor->size-2,uibuttoncolor->size-2,WHITE);
+            DrawRectangleLines(uibuttoncolor->x+5,uibuttoncolor->y+5,uibuttoncolor->size-10,uibuttoncolor->size-10,WHITE);
+   
+        }
     }
     return lbool;
 }
@@ -205,20 +243,22 @@ void UI_TEXTINPUT_free(struct UI_TEXTINPUT* uitextinput)
 {
     free(uitextinput->text);
 }
-struct UI_SLIDEBAR_V UI_SLIDEBAR_V(int x,int y,int pos_max)
+struct UI_SLIDEBAR_V UI_SLIDEBAR_V(int x,int y,int width,int height,int pos_max)
 {
     struct UI_SLIDEBAR_V bar = {x,y};
     bar.pos=0;
-    UI_SLIDEBAR_V_resize(&bar,pos_max);
     bar.color=BLACK;
     bar.visible=true;
+    bar.width=width;
+    bar.height=height;
+    UI_SLIDEBAR_V_resize(&bar,pos_max);
     return bar;
 }
 void UI_SLIDEBAR_V_resize(struct UI_SLIDEBAR_V* bar,int pos_max)
 {
     //actualize size and max barre
     bar->nb_pos_max=pos_max;
-    bar->size_cursor=400/pos_max;
+    bar->size_cursor=bar->height/pos_max;
 }
 
 bool UI_SLIDEBAR_V_draw(struct UI_SLIDEBAR_V* bar)
@@ -236,8 +276,8 @@ bool UI_SLIDEBAR_V_draw(struct UI_SLIDEBAR_V* bar)
             if(bar->pos<bar->nb_pos_max) bar->pos++;
             ret=true;
         }
-        DrawRectangle(bar->x,bar->y+(bar->pos*bar->size_cursor),23,bar->size_cursor,bar->color);
-        DrawRectangleLines(bar->x,bar->y,23,bar->size_cursor*bar->nb_pos_max,bar->color);
+        DrawRectangle(bar->x,bar->y+(bar->pos*bar->size_cursor),bar->width,bar->size_cursor,bar->color);
+        DrawRectangleLines(bar->x,bar->y,bar->width,bar->height,bar->color);
     }
     return ret;
 }
@@ -295,7 +335,7 @@ struct UI_EXPLORER UI_EXPLORER(int x,int y,Color color)
     };
     UI_TEXTZONE_cpy(&uiexplorer.path,UI_EXPLORER_START_PATH);
     uiexplorer.uibtn_icon_back = UI_BUTTON(x+570,y+10," < ",20,color);
-    uiexplorer.barv = UI_SLIDEBAR_V(x,y,10);
+    uiexplorer.barv = UI_SLIDEBAR_V(x,y,23,400,10);
     _UI_EXPLORER_scan(&uiexplorer,0);
     return uiexplorer;
 }
