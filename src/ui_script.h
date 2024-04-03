@@ -1,5 +1,4 @@
-#ifndef UI_SCRIPT_H
-#define UI_SCRIPT_H
+#pragma once
 #include "raylib.h"
 #include "data_type.h"
 #include "ui.h"
@@ -14,4 +13,3 @@ void UI_Script_LoadF(struct UI_Script* uiscr,const char* pfile);
 void UI_Script_LoadD(struct UI_Script* uiscr, struct sdata sdata);
 void UI_Script_Save(struct UI_Script uiscr,struct sdata* sdata);
 void UI_Script_Draw(struct UI_Script uiscr);
-#endif

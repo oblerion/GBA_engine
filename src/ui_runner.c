@@ -1,8 +1,22 @@
 #include "ui_runner.h"
+struct UI_Runner
+{
+    struct CLUA clua;
+    struct Sprite spr[DT_MAX_SPRITE];
+    struct Palette pal[DT_MAX_PALETTE];
+}uirun;
+
+int rlua_trace(clua_state* L)
+{
+    const char* pstr = lua_tostring(L,1);
+    puts(pstr);
+    return 0;
+}
+
 int rlua_cls(clua_state* L)
 {
     int id = lua_tointeger(L,1);
-    Color col = GetColor(uirun.pal[0].palette[id]);
+    Color col = uirun.pal[0].palette[id];
     DrawRectangle(0,0,GetScreenWidth(),GetScreenHeight(),col);
     return 0;
 }
@@ -11,10 +25,10 @@ int rlua_drawtext(clua_state* L)
 {
     // extern struct UI_Runner uirun;
     const char* cstr = lua_tostring(L,1);
-    int x = lua_tointeger(L,2);
-    int y = lua_tointeger(L,3);
+    int x = lua_tonumber(L,2);
+    int y = lua_tonumber(L,3);
  
-    Color col = GetColor(uirun.pal[0].palette[(int)lua_tonumber(L,4)]);
+    Color col = uirun.pal[0].palette[(int)lua_tonumber(L,4)];
     int scale = lua_tointeger(L,5);
     if(scale==0) scale=16;
     DrawText(cstr,x,y,scale,col);
@@ -25,32 +39,32 @@ int rlua_drawtext(clua_state* L)
 int rlua_drawsprite(clua_state* L)
 {
     int id = lua_tointeger(L,1);
-    int x = lua_tointeger(L,2);
-    int y = lua_tointeger(L,3);
+    int x = lua_tonumber(L,2);
+    int y = lua_tonumber(L,3);
     int scale = lua_tointeger(L,4);
     if(scale == 0) scale = 2;
-    Atlas_DrawSprite(uirun.atlasspr,id,x,y,scale);
+    Atlas_DrawSprite(id,x,y,scale);
     return 0;
 }
 
 int rlua_drawrect(clua_state* L)
 {
-    int x = lua_tointeger(L,1);
-    int y = lua_tointeger(L,2);
+    int x = lua_tonumber(L,1);
+    int y = lua_tonumber(L,2);
     int w = lua_tointeger(L,3);
     int h = lua_tointeger(L,4);;
-    Color col = GetColor(uirun.pal[0].palette[(int)lua_tonumber(L,5)]);
+    Color col = uirun.pal[0].palette[(int)lua_tonumber(L,5)];
     DrawRectangle(x,y,w,h,col);
     return 0;
 }
 
 int rlua_drawrectb(clua_state* L)
 {
-    int x = lua_tointeger(L,1);
-    int y = lua_tointeger(L,2);
+    int x = lua_tonumber(L,1);
+    int y = lua_tonumber(L,2);
     int w = lua_tointeger(L,3);
     int h = lua_tointeger(L,4);;
-    Color col = GetColor(uirun.pal[0].palette[(int)lua_tonumber(L,5)]);
+    Color col = uirun.pal[0].palette[(int)lua_tonumber(L,5)];
     DrawRectangleLines(x,y,w,h,col);
     return 0;
 }
@@ -135,8 +149,6 @@ int rlua_mouse(clua_state* L)
     return 5;
 }
 
-
-
 void _UI_Runner_functionpush(int (*pfunc)(clua_state*),const char* name)
 {
     CLUA_setfunction(&uirun.clua,pfunc,name);
@@ -153,15 +165,7 @@ void UI_Runner()
     _UI_Runner_functionpush(rlua_btn,"btn");
     _UI_Runner_functionpush(rlua_btnp,"btnp");
     _UI_Runner_functionpush(rlua_mouse,"mouse");
-    // pal
-    Image img = GenImageColor(32,5,BLACK);
-    uirun.atlaspal = LoadTextureFromImage(img);
-    UnloadImage(img);
-
-    //spr
-    img = GenImageColor(256,256,BLACK);
-    uirun.atlasspr = LoadTextureFromImage(img);
-    UnloadImage(img);
+    _UI_Runner_functionpush(rlua_trace,"trace");
 }
 
 
@@ -174,14 +178,15 @@ bool UI_Runner_Load(const char *pfile)
         FILE* fic = fopen(pfile,"rb");
         if(fic!=NULL)
         {
+            UI_Runner();
             fread(&sdata,sizeof(struct sdata),1,fic);
             fclose(fic);
             for(int i=0;i<DT_MAX_PALETTE;i++)
                 uirun.pal[i]=PaletteD(sdata.list_pal[i]);
-            Atlas_UpdatePalette(uirun.atlaspal,uirun.pal);
+            Atlas_UpdatePalette(uirun.pal);
             for(int i=0;i<DT_MAX_SPRITE;i++)
                 uirun.spr[i]=SpriteD(sdata.list_spr[i]);
-            Atlas_UpdateSprite(uirun.atlasspr,uirun.spr);
+            Atlas_UpdateSprite(uirun.spr);
             CLUA_dostring(&uirun.clua,sdata.script);
             return true;
         }
@@ -194,14 +199,15 @@ bool UI_Runner_Load(const char *pfile)
         FILE* fic = fopen(fileext,"rb");
         if(fic!=NULL)
         {
+            UI_Runner();
             fread(&sdata,sizeof(struct sdata),1,fic);
             fclose(fic);
             for(int i=0;i<DT_MAX_PALETTE;i++)
                 uirun.pal[i]=PaletteD(sdata.list_pal[i]);
-            Atlas_UpdatePalette(uirun.atlaspal,uirun.pal);
+            Atlas_UpdatePalette(uirun.pal);
             for(int i=0;i<DT_MAX_SPRITE;i++)
                 uirun.spr[i]=SpriteD(sdata.list_spr[i]);
-            Atlas_UpdateSprite(uirun.atlasspr,uirun.spr);
+            Atlas_UpdateSprite(uirun.spr);
             CLUA_dofile(&uirun.clua,pfile);
             return true;
         }else puts(TextFormat("runner error : %s not found",fileext));
@@ -212,10 +218,10 @@ bool UI_Runner_LoadD(struct sdata sdata)
 {;
     for(int i=0;i<DT_MAX_PALETTE;i++)
         uirun.pal[i]=PaletteD(sdata.list_pal[i]);
-    Atlas_UpdatePalette(uirun.atlaspal,uirun.pal);
+    Atlas_UpdatePalette(uirun.pal);
     for(int i=0;i<DT_MAX_SPRITE;i++)
         uirun.spr[i]=SpriteD(sdata.list_spr[i]);
-    Atlas_UpdateSprite(uirun.atlasspr,uirun.spr);
+    Atlas_UpdateSprite(uirun.spr);
     CLUA_dostring(&uirun.clua,sdata.script);
     return true;
         
@@ -227,12 +233,10 @@ void UI_Runner_Draw()
         DrawText(CLUA_geterror(&uirun.clua),23,23,20,BLACK);
     }
     else
-        CLUA_callfunction(&uirun.clua,"TIC");
+        CLUA_callfunction(&uirun.clua,"EGBA");
 }
 
 void UI_Runner_Free()
 {
     CLUA_free(&uirun.clua);
-    UnloadTexture(uirun.atlaspal);
-    UnloadTexture(uirun.atlasspr);
 }

@@ -1,12 +1,11 @@
-#ifndef UI_SPRITE_H
-#define UI_SPRITE_H
+#pragma once
 #include "raylib.h"
 #include <math.h>
 #include "ui.h"
 #include "data_type.h"
 #include "Sprite.h"
 #include "ui_palette.h"
-#include "atlas.h"
+#include "Atlas.h"
 struct UI_Sprite;
 
 struct UI_BUTTONSPRITE 
@@ -24,7 +23,7 @@ int UI_BUTTONSPRITE_Draw(struct UI_BUTTONSPRITE btnspr,struct UI_Sprite uispr);
 struct UI_Sprite
 {
     Texture2D sprfond;
-    Texture2D spratlas;
+    //Texture2D spratlas;
     struct UI_BUTTONSPRITE btnspr[DT_MAX_SPRITE];
     struct UI_BUTTONCOLOR btncolor[256];
     struct UI_BUTTONCOLOR btnpal[32];
@@ -46,4 +45,3 @@ void UI_Sprite_LoadPalette(struct UI_Sprite* uispr,struct UI_Palette uipal);
 void UI_Sprite_Save(struct UI_Sprite uispr, struct sdata* sdata);
 int UI_Sprite_Draw(struct UI_Sprite* uispr,struct UI_Palette uipal);
 void UI_Sprite_Free(struct UI_Sprite uispr);
-#endif

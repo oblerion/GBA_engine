@@ -1,5 +1,6 @@
-#ifndef UI_H
-#define UI_H
+// #ifndef UI_H
+// #define UI_H
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include "raylib.h"
@@ -105,6 +106,8 @@ bool UI_SLIDEBAR_V_draw(struct UI_SLIDEBAR_V* bar);
     #define UI_EXPLORER_START_PATH "/home"
 #elif _WIN32
     #define UI_EXPLORER_START_PATH "C:/"
+#else
+    #define UI_EXPLORER_START_PATH "."
 #endif
 struct UI_EXPLORER
 {
@@ -146,4 +149,4 @@ char* UI_FILEIO_getFullPath(struct UI_FILEIO* uifileio);
 int UI_FILEIO_draw(struct UI_FILEIO* uifileio,KBD_Layout layout);
 void UI_FILEIO_free(struct UI_FILEIO* uifileio);
 
-#endif
+// #endif

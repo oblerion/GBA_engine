@@ -1,5 +1,4 @@
-#ifndef CLUA_H
-#define CLUA_H
+#pragma once
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
@@ -28,4 +27,3 @@ void CLUA_callfunction(struct CLUA* clua,const char* name);
 char* CLUA_geterror(struct CLUA* clua);
 short CLUA_iferror(struct CLUA* clua);
 void CLUA_free(struct CLUA* clua);
-#endif

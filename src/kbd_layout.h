@@ -1,5 +1,4 @@
-#ifndef KBD_LAYOUT_H
-#define KBD_LAYOUT_H
+#pragma once
 #include "raylib.h"
 // kbd_layout ver 0.1
 
@@ -14,4 +13,3 @@ typedef enum KBD_Layout KBD_Layout;
 int Kbd_GetKeyPressed(KBD_Layout layout);
 bool Kbd_IsKeyDown(KBD_Layout layout, int key);
 bool Kbd_IsKeyPressed(KBD_Layout layout, int key);
-#endif
