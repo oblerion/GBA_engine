@@ -1,0 +1,60 @@
+[editor]
+line_wrapping=false
+line_break_column=72
+auto_continue_multiline=true
+
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=false
+strip_trailing_spaces=false
+replace_tabs=false
+
+[indentation]
+indent_width=4
+indent_type=1
+indent_hard_tab_width=8
+detect_indent=false
+detect_indent_width=false
+indent_mode=2
+
+[project]
+name=egba
+base_path=/home/desnot/GD/c_raylib/egba
+description=
+file_patterns=
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=72
+
+[files]
+current_page=5
+FILE_NAME_0=900;C;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FGD%2Fc_raylib%2Fegba%2Fsrc%2Fmain.c;0;4
+FILE_NAME_1=2476;C++;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FGD%2Fc_raylib%2Fegba%2Fsrc%2Fmain.h;0;4
+FILE_NAME_2=0;C;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FGD%2Fc_raylib%2Fegba%2Fsrc%2Fclua.c;0;4
+FILE_NAME_3=0;C++;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FGD%2Fc_raylib%2Fegba%2Fsrc%2Fclua.h;0;4
+FILE_NAME_4=0;C++;0;EUTF-8;1;1;0;%2Fusr%2Flocal%2Finclude%2Fraylib.h;0;4
+FILE_NAME_5=472;Markdown;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FGD%2Fc_raylib%2Fegba%2FWIP.md;0;4
+FILE_NAME_6=0;Markdown;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FBureau%2FAdvanceStar%2FREADME.md;0;4
+FILE_NAME_7=0;Markdown;0;EUTF-8;1;1;0;%2Fhome%2Fdesnot%2FBureau%2FAdvanceStar%2FWIP.md;0;4
+
+[VTE]
+last_dir=/home/desnot
+
+[build-menu]
+EX_00_LB=_Execute
+EX_00_CM=cd .. && ./egba
+EX_00_WD=
+ShFT_00_LB=Build
+ShFT_00_CM=cd %d && make
+ShFT_00_WD=
+filetypes=Sh;C;
+NF_01_LB=Make Custom _Target…
+NF_01_CM=make 
+NF_01_WD=
+CFT_00_LB=Build
+CFT_00_CM=cd .. && make
+CFT_00_WD=
+CFT_01_LB=_Build+
+CFT_01_CM=gcc -Wall -o "%e" "%f"
+CFT_01_WD=

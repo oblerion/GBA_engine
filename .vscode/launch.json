@@ -6,7 +6,7 @@
     "configurations": [      
         {
             "name" : "compile",
-            "command" : "make",
+            "command" : "compilator",
             "type" : "node-terminal",
             "request": "launch"
         }

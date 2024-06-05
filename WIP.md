@@ -1,9 +1,28 @@
 
 ## projects browser
-- [ ] icon lua/sprite/egba
+- [x] icon lua/sprite/egba
 - [x] button add/delete project
 - [x] timer
-## project menu
-- [ ] button run debug/build egba/export bin/import
-- [ ] loading error script/png
+## project viewer
+- [x] button run debug/build egba
+- [x] palette/sprite load uisprite
+- [x] button export bin
+- [x] import lua/script <- egba
+- [x] fix log message
 - [x] button view sprite/script
+- [x] ui timer fix
+- [x] egba data wrong
+
+- [x] pix function
+- [x] pal function
+
+- [x] lock system
+- [x] sprite load error
+
+- [x] btn id 4 5 -> x c
+- [x] lua api rename print -> text
+## lua/egba save-load static data
+- [ ] data to egba
+- [ ] .sav file for lua
+- [ ] function get data
+- [ ] function set data
