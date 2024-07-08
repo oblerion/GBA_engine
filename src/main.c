@@ -133,7 +133,7 @@ struct Palette PaletteF(const char *pfile)
 
 Color Palette_Get(struct Palette pal, int id)
 {
-    if(id<0 || id>DT_MAX_COLOR) return WHITE;
+    if(id<0 || id>EGBA_MAX_COLOR_PALETTE) return WHITE;
     return pal.data[id];
 }
 void Palette_Copy(struct Palette* dest,struct Palette sou)
@@ -148,7 +148,7 @@ const char *Palette_GetName(struct Palette pal)
 Image Palette_GetImg(struct Palette pal)
 {
     Image img = GenImageColor(32,1,BLACK);
-    for(int i=0;i<DT_MAX_COLOR;i++)
+    for(int i=0;i<EGBA_MAX_COLOR_PALETTE;i++)
     {
         ImageDrawPixel(&img,i,0,pal.data[i]);
     }
@@ -202,7 +202,7 @@ void Atlas_UpdatePalette(struct Palette* palettes)
 {
     Image img = GenImageColor(32,5,BLACK);
     Image palimg;
-    for(int i=0;i<DT_MAX_PALETTE;i++)
+    for(int i=0;i<EGBA_MAX_PALETTE;i++)
     {
         palimg = Palette_GetImg(palettes[i]);
         ImageDraw(&img,palimg,(Rectangle){0,0,32,1},(Rectangle){0,i,32,1},WHITE);
@@ -220,7 +220,7 @@ void Atlas_DrawSprite(int id,int x,int y,int scale)
 void Atlas_UpdateSprite(struct Sprite* sprites)
 {
     Image img = GenImageColor(256,256,(Color){0,0,0,0});
-    for(int i=0;i<DT_MAX_SPRITE;i++)
+    for(int i=0;i<EGBA_MAX_SPRITE;i++)
     {
         Image imgspr = Sprite_GetImg(sprites[i]);
         ImageDraw(&img,imgspr,
@@ -245,7 +245,7 @@ void Atlas_Free()
 
 void UI_Palette_Init()
 {
-    for(int i=0;i<DT_MAX_PALETTE;i++)
+    for(int i=0;i<EGBA_MAX_PALETTE;i++)
         strcpy(UI_Palette.palettes[i].name,"");
     UI_Palette.palette_nb=0;
 }
@@ -256,7 +256,7 @@ void UI_palette_LoadF(const char* pfile)
         Image img = LoadImage(pfile);
         if(img.width>0 && img.width<=32 && img.height==1)
         {
-            if(UI_Palette.palette_nb<DT_MAX_PALETTE)
+            if(UI_Palette.palette_nb<EGBA_MAX_PALETTE)
             {
                   UI_Palette.palettes[UI_Palette.palette_nb] = PaletteF(pfile);
                     Atlas_UpdatePalette(UI_Palette.palettes);
@@ -288,13 +288,13 @@ void UI_palette_LoadF(const char* pfile)
 }
 void UI_Palette_LoadD(struct sdata sdata)
 {
-    for(int j=0;j<DT_MAX_PALETTE;j++)
+    for(int j=0;j<EGBA_MAX_PALETTE;j++)
     {
         strcpy(UI_Palette.palettes[j].name,
         sdata.palette_name[j]);
-        for(int i=0;i<DT_MAX_COLOR;i++)
+        for(int i=0;i<EGBA_MAX_PALETTE;i++)
         {
-            UI_Palette.palettes[j].data[i] = sdata.palette_data[(j*DT_MAX_COLOR)+i];
+            UI_Palette.palettes[j].data[i] = sdata.palette_data[(j*EGBA_MAX_COLOR_PALETTE)+i];
         }
     }
     Atlas_UpdatePalette(UI_Palette.palettes);
@@ -302,13 +302,13 @@ void UI_Palette_LoadD(struct sdata sdata)
 }
 void UI_Palette_Save(struct sdata* sdata)
 {
-    for(int i=0;i<DT_MAX_PALETTE;i++)
+    for(int i=0;i<EGBA_MAX_PALETTE;i++)
     {
         strcpy(sdata->palette_name[i],
         UI_Palette.palettes[i].name);
-        for(int j=0;j<DT_MAX_COLOR;j++)
+        for(int j=0;j<EGBA_MAX_COLOR_PALETTE;j++)
         {
-            sdata->palette_data[(i*DT_MAX_COLOR)+j] = UI_Palette.palettes[i].data[j];
+            sdata->palette_data[(i*EGBA_MAX_COLOR_PALETTE)+j] = UI_Palette.palettes[i].data[j];
         }
     }
 }
@@ -440,8 +440,8 @@ struct Sprite UI_sprite_Get(int id)
 
 void UI_Sprite_LoadD(struct sdata sdata)
 {
-    for(int i=0;i<DT_MAX_SPRITE;i++)
-    for(int j=0;j<DT_MAX_SPRITE;j++)
+    for(int i=0;i<EGBA_MAX_SPRITE;i++)
+    for(int j=0;j<EGBA_MAX_COLOR_SPRITE;j++)
     {
         int mapid = sdata.sprite_mapid[i][j];
         if(mapid<0)
@@ -478,19 +478,19 @@ void UI_sprite_LoadF(const char *pfile)
 
 void UI_Sprite_Save(struct sdata *sdata)
 {
-    for(int i=0;i<DT_MAX_SPRITE;i++)
-    for(int j=0;j<DT_MAX_SPRITE;j++)
+    for(int i=0;i<EGBA_MAX_SPRITE;i++)
+    for(int j=0;j<EGBA_MAX_COLOR_SPRITE;j++)
     {
         sdata->sprite_mapid[i][j]=-1;
-        for(int i2=0;i2<DT_MAX_PALETTE;i2++)
-        for(int j2=0;j2<DT_MAX_COLOR;j2++)
+        for(int i2=0;i2<EGBA_MAX_PALETTE;i2++)
+        for(int j2=0;j2<EGBA_MAX_COLOR_PALETTE;j2++)
         {
             int icolpal = ColorToInt(UI_Palette.palettes[i2].data[j2]);
             int icolspr = ColorToInt(UI_Sprite.sprites[i].data[j]);
             if(icolpal==icolspr)
             {
 
-                sdata->sprite_mapid[i][j] = (i2*DT_MAX_COLOR)+j2;
+                sdata->sprite_mapid[i][j] = (i2*EGBA_MAX_COLOR_PALETTE)+j2;
                 break;
                 break;
             }
@@ -539,7 +539,7 @@ void UI_Script_LoadF(const char* pfile)
         fseek(fic,SEEK_SET,0);
         int p=0;
         strcpy(UI_Script.script,"\0");
-        if(pos<DT_MAX_SCRIPTSIZE)
+        if(pos<EGBA_MAX_SCRIPTSIZE)
         {
             do
             {
@@ -586,7 +586,7 @@ int rlua_trace(clua_state* L)
 int rlua_pal(clua_state* L)
 {
     int id = lua_tointeger(L,1);
-    if(id>-1 && id<DT_MAX_PALETTE) uirun.palette_id=id;
+    if(id>-1 && id<EGBA_MAX_PALETTE) uirun.palette_id=id;
     return 0;
 }
 
@@ -1075,7 +1075,7 @@ void BROWSER_Scan()
 }
 void BROWSER_CreateProject(const char* name)
 {
-	if(_BROWSER.project_nb<BROWSER_PROJECT_MAX)
+	if(_BROWSER.project_nb<EGBA_MAX_PROJECT)
 	{
 		char tmp_name[100];
 		int tmp_i = 0;
@@ -1165,7 +1165,7 @@ int BROWSER_Draw()
 		
 	}
 	// add button
-	if(_BROWSER.project_nb<BROWSER_PROJECT_MAX)
+	if(_BROWSER.project_nb<EGBA_MAX_PROJECT)
 	{
 		if(UIBUTTON(
 			(((_BROWSER.project_nb)/BROWSER_PROJECT_MAX_H)*200)+13,
@@ -1636,8 +1636,7 @@ void EGBA_Free()
         UI_Runner_Free();
     }
 }
-#define EGBA_VERSION "a1.5"
-#define EGBA_TITLE TextFormat("GBA engine ver %s by magnus oblerion",EGBA_VERSION)
+#include "EGBA.h"
 //------------------ main -------------------
 int main(int narg,char** sarg)
 {

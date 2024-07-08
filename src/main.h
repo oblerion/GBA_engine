@@ -5,15 +5,12 @@
 #include <string.h>
 #include "../cimg.h"
 
-#define DT_MAX_COLOR 32
-#define DT_MAX_SPRITE 256
-#define DT_MAX_PALETTE 5
-#define DT_MAX_SCRIPTSIZE 64000
+#include "EGBA.h"
 
 struct Palette
 {
     char name[35];
-    Color data[DT_MAX_COLOR];
+    Color data[EGBA_MAX_COLOR_PALETTE];
 };
 
 
@@ -35,11 +32,11 @@ struct ssaving
 };
 struct sdata
 {
-    char palette_name[DT_MAX_PALETTE][35];
-    Color palette_data[DT_MAX_PALETTE*DT_MAX_COLOR];
+    char palette_name[EGBA_MAX_PALETTE][35];
+    Color palette_data[EGBA_MAX_PALETTE*EGBA_MAX_COLOR_PALETTE];
     int palette_nb;
-    char sprite_mapid[DT_MAX_SPRITE][DT_MAX_SPRITE];
-    char script[DT_MAX_SCRIPTSIZE];
+    char sprite_mapid[EGBA_MAX_SPRITE][EGBA_MAX_COLOR_SPRITE];
+    char script[EGBA_MAX_SCRIPTSIZE];
     char islock;
     struct ssaving saving;
 };
@@ -75,12 +72,12 @@ struct UI_BUTTONSPRITE
 struct UI_Sprite
 {
     Texture2D sprfond;
-    struct UI_BUTTONSPRITE btnspr[DT_MAX_SPRITE];
+    struct UI_BUTTONSPRITE btnspr[EGBA_MAX_SPRITE];
     struct UI_SLIDEBAR_V slidepalette;
     Color curant_color;
     int curant_spr;
     int curant_pal;
-    struct Sprite sprites[DT_MAX_SPRITE];
+    struct Sprite sprites[EGBA_MAX_SPRITE];
     int btnspr_size;
     int btncol_size;
 }UI_Sprite;
@@ -88,14 +85,14 @@ struct UI_Sprite
 struct UI_Palette
 {
     //struct UI_BUTTON btndelete;
-    struct Palette palettes[DT_MAX_PALETTE];
+    struct Palette palettes[EGBA_MAX_PALETTE];
     int palette_nb;
 }UI_Palette;
 
 struct UI_Script
 {
     char source_script[40];
-    char script[DT_MAX_SCRIPTSIZE];
+    char script[EGBA_MAX_SCRIPTSIZE];
 }UI_Script;
 
 #include "clua.h"
@@ -118,11 +115,10 @@ typedef struct sproject Project;
 
 
 
-#define BROWSER_PROJECT_MAX 100
 #define BROWSER_PROJECT_MAX_H 24
 struct sbrowser
 {
-	Project list[BROWSER_PROJECT_MAX];
+	Project list[EGBA_MAX_PROJECT];
 	int project_nb;
 	float timer;
 
