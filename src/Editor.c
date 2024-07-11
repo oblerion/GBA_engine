@@ -845,20 +845,13 @@ void PROJECT_ExportScript(Project ppjt)
     fprintf(fic,"%s",Editor_data.script);
     fclose(fic);
 }
+#include "Runner.h"
 char PROJECT_DebugInit(Project ppjt)
 {
     const char* lfile = PROJECT_GetFileLua(ppjt);
     if(FileExists(lfile))
     {
-		// UI_Runner();
-		// uirun.isdebug=1;
-		// CLUA_dofile(&uirun.clua,lfile);
-#ifdef WIN32
-        system(TextFormat("%s.exe %s",EGBA_RUN_NAME, lfile));
-#endif
-#ifdef __linux
-        system(TextFormat("./%s %s",EGBA_RUN_NAME, lfile));
-#endif
+        Runner_Load(lfile);
         return 1;
     }
     return 0;
@@ -869,14 +862,7 @@ char PROJECT_RunInit(Project ppjt)
     const char* lfile = PROJECT_GetFileEgba(ppjt);
     if(FileExists(lfile))
     {
-		// uirun.isdebug=0;
-  //       UI_Runner_Load(lfile);
-#ifdef WIN32
-        system(TextFormat("%s.exe %s",EGBA_RUN_NAME, lfile));
-#endif
-#ifdef __linux
-        system(TextFormat("./%s %s",EGBA_RUN_NAME, lfile));
-#endif
+        Runner_Load(lfile);
         return 1;
     }
     return 0;
@@ -1104,9 +1090,9 @@ struct suiproject
 
 void UIPROJECT_LoadIcons()
 {
-	_UIPROJECT.spr = LoadTextureFromImage(spr);
-    _UIPROJECT.lua = LoadTextureFromImage(lua);
-    _UIPROJECT.egba = LoadTextureFromImage(egba);
+	_UIPROJECT.spr = LoadTextureFromImage(imgspr);
+    _UIPROJECT.lua = LoadTextureFromImage(imglua);
+    _UIPROJECT.egba = LoadTextureFromImage(imgegba);
 }
 void UIPROJECT_Init(int idproject)
 {
@@ -1187,7 +1173,11 @@ void UIPROJECT_Draw()
 					if(IsKeyPressed(KEY_SPACE))
 					{
                         puts("[EGBA][DEBUG INIT]");
-						if(!PROJECT_DebugInit(lproject))
+						if(PROJECT_DebugInit(lproject))
+                        {
+                           _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
+                        }
+                        else
                             printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileLua(lproject));
 					}
 
@@ -1196,7 +1186,8 @@ void UIPROJECT_Draw()
                     )
 					{
                         puts("[EGBA] : sprite/script -> egba ...");
-						PROJECT_BuildEgba(lproject,0);
+						Editor_data.islock=0;
+                        PROJECT_BuildEgba(lproject,0);
                         puts("[EGBA] : done");
                         UIPROJECT_Update();
 					}
@@ -1204,6 +1195,7 @@ void UIPROJECT_Draw()
 					if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_L))
                     {
                         puts("[EGBA] : sprite/script -> lock egba ...");
+                        Editor_data.islock=1;
 						PROJECT_BuildEgba(lproject,1);
                         puts("[EGBA] : done");
                         UIPROJECT_Update();
@@ -1220,7 +1212,11 @@ void UIPROJECT_Draw()
 					if(IsKeyPressed(KEY_ENTER))
 					{
                         puts("[EGBA][RUNNER START]");
-						if(!PROJECT_RunInit(lproject))
+						if(PROJECT_RunInit(lproject))
+                        {
+                            _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
+                        }
+                        else
                             printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileEgba(lproject));
 					}
 
@@ -1287,14 +1283,18 @@ void UIPROJECT_Draw()
 				}
 				UI_Script_Draw(Editor_data);
 			break;
-			// case UIPROJECT_STATE_VRUNNER:
+			case UIPROJECT_STATE_VRUNNER:
+                if(Runner_IsDown())
+                    _UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
+                else
+                    Runner_Draw();
 			// 	// UI_Runner_Draw();
 			// 	// if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
 			// 	// {
 			// 	// 	_UIPROJECT.state = UIPROJECT_STATE_DEFAULT;
    //  //                 puts("[EGBA][DEBUG/RUN END]");
 			// 	// }
-			// break;
+			break;
 			default:;
 		};
 	}
@@ -1307,72 +1307,89 @@ void UIPROJECT_Free()
 	UnloadTexture(_UIPROJECT.egba);
 }
 
-
-
-
-int main(int narg,char** sarg)
+#include "Editor.h"
+char Editor_Init(int narg,char** sarg)
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
-   // float fraq = GetMonitorWidth(0)/GetMonitorHeight(0);
-    const int screenWidth = (720*4)/3; //GetMonitorWidth(0);
-    const int screenHeight = 720;//GetMonitorHeight(0);
-    InitWindow(screenWidth, screenHeight, EGBA_TITLE);
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
-    SetWindowIcon(icon);
-
-    //init
-    Atlas_Init();
-    UICONFIG_Init();
-    UI_Palette_Init(&Editor_data);
-    UI_Sprite_Init(&Editor_data);
-    Editor_data.script[0]='\0';
-    UIPROJECT_LoadIcons();
-    BROWSER_Init();
-    int browser_state=-1;
-
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    //SetWindowIcon(imgicon);
+    if(narg==1 &&
+        TextIsEqual(GetFileNameWithoutExt(sarg[0]),EGBA_EDIT_NAME))
     {
-        BeginDrawing();
-        ClearBackground(UICONFIG_COL1());
-
-        if(_UIPROJECT.isactive==0)
-        {
-
-            if(UIBUTTON(900,5,"doc",20,UICONFIG_COL2()))
-            {
-                OpenURL("https://oblerion.itch.io/gba-engine");
-            }
-
-            if(_UICONFIG.isactive==0)
-            {
-                if(UIBUTTON(800,5,"setting",20,UICONFIG_COL2()))
-                {
-                    UICONFIG_SetActive(1);
-                }
-                browser_state = BROWSER_Draw();
-                if(browser_state>-1)
-                {
-                    UIPROJECT_Init(browser_state);
-                }
-            }
-            else if(UIBUTTON(800,5,"browser",20,UICONFIG_COL2()))
-            {
-                //_UICONFIG.isactive = 0;
-                UICONFIG_SetActive(0);
-            }
-            UICONFIG_Draw(5,5);
-        }
-        UIPROJECT_Draw();
-
-        EndDrawing();
+        //init
+        Atlas_Init();
+        UICONFIG_Init();
+        UI_Palette_Init(&Editor_data);
+        UI_Sprite_Init(&Editor_data);
+        Editor_data.script[0]='\0';
+        UIPROJECT_LoadIcons();
+        BROWSER_Init();
+        return 1;
     }
+    return 0;
+}
 
+void Editor_Draw()
+{
+    ClearBackground(UICONFIG_COL1());
+    int browser_state=-1;
+    if(_UIPROJECT.isactive==0)
+    {
+
+        if(UIBUTTON(900,5,"doc",20,UICONFIG_COL2()))
+        {
+            OpenURL("https://oblerion.itch.io/gba-engine");
+        }
+
+        if(_UICONFIG.isactive==0)
+        {
+            if(UIBUTTON(800,5,"setting",20,UICONFIG_COL2()))
+            {
+                UICONFIG_SetActive(1);
+            }
+            browser_state = BROWSER_Draw();
+            if(browser_state>-1)
+            {
+                UIPROJECT_Init(browser_state);
+            }
+        }
+        else if(UIBUTTON(800,5,"browser",20,UICONFIG_COL2()))
+        {
+            //_UICONFIG.isactive = 0;
+            UICONFIG_SetActive(0);
+        }
+        UICONFIG_Draw(5,5);
+    }
+    UIPROJECT_Draw();
+}
+
+void Editor_Free()
+{
     // free editor
     UI_Sprite_Free();
     UIPROJECT_Free();
     Atlas_Free();
-
-    CloseWindow();        // Close window and OpenGL
-    return 0;
 }
+
+// int main(int narg,char** sarg)
+// {
+//     // Initialization
+//     //--------------------------------------------------------------------------------------
+//    // float fraq = GetMonitorWidth(0)/GetMonitorHeight(0);
+//     const int screenWidth = (720*4)/3; //GetMonitorWidth(0);
+//     const int screenHeight = 720;//GetMonitorHeight(0);
+//     InitWindow(screenWidth, screenHeight, EGBA_TITLE);
+//     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+//     SetWindowIcon(icon);
+//
+//     Editor_Init();
+//
+//     while (!WindowShouldClose())    // Detect window close button or ESC key
+//     {
+//         BeginDrawing();
+//         ClearBackground(UICONFIG_COL1());
+//         Editor_Draw();
+//         EndDrawing();
+//     }
+//     Editor_Free();
+//     CloseWindow();        // Close window and OpenGL
+//     return 0;
+// }

@@ -8,7 +8,7 @@ CC=gcc
 CFLAGS="-g -Wall -L${LUALINUX}/lib -llua -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"
 INC="-I${LUALINUX}/include" 
 EXEC="egba"
-DOBJ="build/linux64/obj/"
+DOBJ="build/linux64/"
 
 RAYLIBWIN="/home/desnot/GD/raylib-5.0_win32_mingw-w64"
 RAYLIBWEB="/home/desnot/GD/raylib-5.0_webassembly"
@@ -17,7 +17,7 @@ CFLAGS2="-g -Wall -lm  -L${LUAWIN}/lib -llua -L${RAYLIBWIN}/lib -lraylib -lopeng
 #-static-libstdc++ -static-libgcc"
 INC2="-I${LUAWIN}/include -I${RAYLIBWIN}/include -I/usr/i696-w64-mingw32/include"
 EXEC2="egba.exe"
-DOBJ2="build/win86/obj/"
+DOBJ2="build/win86/"
 
 TCC="";
 TCFLAGS="";
@@ -67,23 +67,13 @@ function link(){
 if [ $# -eq 0 ];then 
 # default
 	rm -f $TEXEC;
-	init "$CC" "$INC" "$CFLAGS" "e_egba" "$DOBJ";
-	comp1 "Editor.c";
-	link;
-	TLINK=""
-	init "$CC" "$INC" "$CFLAGS" "r_egba" "$DOBJ";
-	comp1 "Runner.c";
-	comp1 "clua.c";
+	init "$CC" "$INC" "$CFLAGS" "egba" "$DOBJ";
+	comp;
 	link;
 
 elif [ "$1" == "w" ];then
-	init "$CC2" "$INC2" "$CFLAGS2" "e_egba.exe" "$DOBJ2";
-	comp1 "Editor.c";
-	link;
-	TLINK=""
-	init "$CC2" "$INC2" "$CFLAGS2" "r_egba.exe" "$DOBJ2";
-	comp1 "Runner.c";
-	comp1 "clua.c";
+	init "$CC2" "$INC2" "$CFLAGS2" "egba.exe" "$DOBJ2";
+	comp;
 	link;
 elif [ "$1" == "web" ];then
 	DEXEC="build/web"

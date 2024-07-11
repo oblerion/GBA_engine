@@ -1,6 +1,5 @@
 #include "EGBA.h"
 #include "clua.h"
-#include "../cimg.h"
 //------------- runner -------------------
 //#include "ui_runner.h"
 
@@ -14,7 +13,7 @@ struct Palette GetPalette()
 {
     return UIRun_data.palettes[UIRun_paletteid];
 }
-Image Palette_GetImg(struct Palette pal)
+Image R_Palette_GetImg(struct Palette pal)
 {
     Image img = GenImageColor(32,1,BLACK);
     for(int i=0;i<EGBA_MAX_COLOR_PALETTE;i++)
@@ -23,7 +22,7 @@ Image Palette_GetImg(struct Palette pal)
     }
     return img;
 }
-Image Sprite_GetImg(struct Sprite spr)
+Image R_Sprite_GetImg(struct Sprite spr)
 {
     Image img = GenImageColor(spr.width,spr.height,BLACK);
     for(int i=0;i<spr.width*spr.height;i++)
@@ -32,7 +31,7 @@ Image Sprite_GetImg(struct Sprite spr)
 	}
     return img;
 }
-void Atlas_Init()
+void R_Atlas_Init()
 {
     Image img = GenImageColor(32,5,BLACK);
     UIRun_atlas.palettes = LoadTextureFromImage(img);
@@ -42,13 +41,13 @@ void Atlas_Init()
     UIRun_atlas.sprites = LoadTextureFromImage(img);
     UnloadImage(img);
 }
-void Atlas_UpdatePalette(struct Palette* palettes)
+void R_Atlas_UpdatePalette(struct Palette* palettes)
 {
     Image img = GenImageColor(32,5,BLACK);
     Image palimg;
     for(int i=0;i<EGBA_MAX_PALETTE;i++)
     {
-        palimg = Palette_GetImg(palettes[i]);
+        palimg = R_Palette_GetImg(palettes[i]);
         ImageDraw(&img,palimg,(Rectangle){0,0,32,1},(Rectangle){0,i,32,1},WHITE);
     }
     UpdateTexture(UIRun_atlas.palettes,img.data);
@@ -56,12 +55,12 @@ void Atlas_UpdatePalette(struct Palette* palettes)
     UnloadImage(img);
 }
 
-void Atlas_UpdateSprite(struct Sprite* sprites)
+void R_Atlas_UpdateSprite(struct Sprite* sprites)
 {
     Image img = GenImageColor(256,256,(Color){0,0,0,0});
     for(int i=0;i<EGBA_MAX_SPRITE;i++)
     {
-        Image imgspr = Sprite_GetImg(sprites[i]);
+        Image imgspr = R_Sprite_GetImg(sprites[i]);
         ImageDraw(&img,imgspr,
             (Rectangle){0,0,16,16},
             (Rectangle){(i%16)*16,(i/16)*16,16,16},
@@ -72,24 +71,24 @@ void Atlas_UpdateSprite(struct Sprite* sprites)
     UpdateTexture(UIRun_atlas.sprites,img.data);
     UnloadImage(img);
 }
-void Atlas_DrawSprite(int id,int x,int y,int scale)
+void R_Atlas_DrawSprite(int id,int x,int y,int scale)
 {
     DrawTexturePro(UIRun_atlas.sprites,
         (Rectangle){(id%16)*16,(id/16)*16,16,16},
         (Rectangle){x,y,16*scale,16*scale},(Vector2){0,0},0,WHITE);
 }
-void Atlas_Free()
+void R_Atlas_Free()
 {
     UnloadTexture(UIRun_atlas.palettes);
     UnloadTexture(UIRun_atlas.sprites);
 }
-void UI_Palette_Init(struct segba_data* data)
+void R_UI_Palette_Init(struct segba_data* data)
 {
     for(int i=0;i<EGBA_MAX_PALETTE;i++)
         strcpy(data->palettes[i].name,"");
     data->palette_nb=0;
 }
-void UI_palette_LoadF(struct segba_data* data, const char* pfile)
+void R_UI_palette_LoadF(struct segba_data* data, const char* pfile)
 {
     if(TextIsEqual(GetFileExtension(pfile),".png"))
     {
@@ -103,13 +102,13 @@ void UI_palette_LoadF(struct segba_data* data, const char* pfile)
                 Color col = GetImageColor(img,i*32+j,256);
                 data->palettes[i].data[j]=col;
             }
-            Atlas_UpdatePalette(data->palettes);
+            R_Atlas_UpdatePalette(data->palettes);
             data->palette_nb=5;
         }
         UnloadImage(img);
     }
 }
-void UI_Palette_LoadD(struct segba_data* ddata,struct segba_data sdata)
+void R_UI_Palette_LoadD(struct segba_data* ddata,struct segba_data sdata)
 {
     for(int j=0;j<EGBA_MAX_PALETTE;j++)
     {
@@ -120,11 +119,11 @@ void UI_Palette_LoadD(struct segba_data* ddata,struct segba_data sdata)
             ddata->palettes[j].data[i] = sdata.palettes[j].data[i];
         }
     }
-    Atlas_UpdatePalette(ddata->palettes);
+    R_Atlas_UpdatePalette(ddata->palettes);
     ddata->palette_nb=5;
 }
 
-void UI_sprite_LoadF(struct segba_data* data, const char *pfile)
+void R_UI_sprite_LoadF(struct segba_data* data, const char *pfile)
 {
     Image fullimg = LoadImage(pfile);
     if(fullimg.width==256 && fullimg.height==257)
@@ -151,7 +150,7 @@ void UI_sprite_LoadF(struct segba_data* data, const char *pfile)
     UnloadImage(fullimg);
 }
 
-void UI_Sprite_LoadD(struct segba_data* ddata,struct segba_data sdata)
+void R_UI_Sprite_LoadD(struct segba_data* ddata,struct segba_data sdata)
 {
     // for(int i=0;i<EGBA_MAX_SPRITE;i++)
     // for(int j=0;j<EGBA_MAX_COLOR_SPRITE;j++)
@@ -166,7 +165,7 @@ void UI_Sprite_LoadD(struct segba_data* ddata,struct segba_data sdata)
     {
         ddata->sprites[i] = sdata.sprites[i];
     }
-    Atlas_UpdateSprite(ddata->sprites);
+    R_Atlas_UpdateSprite(ddata->sprites);
 }
 
 int rlua_trace(clua_state* L)
@@ -218,7 +217,7 @@ int rlua_drawsprite(clua_state* L)
     int y = lua_tonumber(L,3);
     int scale = lua_tointeger(L,4);
     if(scale == 0) scale = 2;
-    Atlas_DrawSprite(id,x,y,scale);
+    R_Atlas_DrawSprite(id,x,y,scale);
     return 0;
 }
 
@@ -383,8 +382,8 @@ void UI_Runner()
 }
 void UI_Runner_LoadD(struct segba_data sdata)
 {
-    UI_Palette_LoadD(&UIRun_data, sdata);
-    UI_Sprite_LoadD(&UIRun_data, sdata);
+    R_UI_Palette_LoadD(&UIRun_data, sdata);
+    R_UI_Sprite_LoadD(&UIRun_data, sdata);
     strcpy(UIRun_data.script,sdata.script);
     CLUA_dostring(&UIRun_clua,sdata.script);
 }
@@ -416,8 +415,8 @@ bool UI_Runner_Load(const char *pfile)
             UIRun_isdebug=1;
             // if(_EGBA.ifrunner==true)
             // {
-				UI_palette_LoadF(&UIRun_data,fileext);
-				UI_sprite_LoadF(&UIRun_data, fileext);
+				R_UI_palette_LoadF(&UIRun_data,fileext);
+				R_UI_sprite_LoadF(&UIRun_data, fileext);
             // }
 
             CLUA_dofile(&UIRun_clua,pfile);
@@ -442,9 +441,16 @@ void UI_Runner_Free()
     CLUA_free(&UIRun_clua);
 }
 
+#include "Runner.h"
+void Runner_Load(const char* sfile)
+{
+    R_Atlas_Init();
+    UI_Runner();
+    UI_Runner_Load(sfile);
+}
 void Runner_Init(int narg,char** sarg)
 {
-    Atlas_Init();
+    R_Atlas_Init();
     UI_Runner();
 
     if(narg==1)
@@ -478,44 +484,47 @@ void Runner_Init(int narg,char** sarg)
     }
 }
 
+char Runner_IsDown()
+{
+    if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) return 1;
+    return 0;
+}
+
 void Runner_Draw()
 {
+    ClearBackground(WHITE);
     UI_Runner_Draw();
 }
 
 void Runner_Free()
 {
     UI_Runner_Free();
-    Atlas_Free();
+    R_Atlas_Free();
 }
-//------------------ main -------------------
-int main(int narg,char** sarg)
-{
-    // Initialization
-    //--------------------------------------------------------------------------------------
-   // float fraq = GetMonitorWidth(0)/GetMonitorHeight(0);
-    const int screenWidth = (720*4)/3; //GetMonitorWidth(0);
-    const int screenHeight = 720;//GetMonitorHeight(0);
-    InitWindow(screenWidth, screenHeight, EGBA_TITLE);
-    SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
-    SetWindowIcon(icon);
-
-    Runner_Init(narg,sarg);
-
-    Image limg = LoadImageFromTexture(UIRun_atlas.sprites);
-    ExportImage(limg,"ext_img.png");
-    UnloadImage(limg);
-
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
-            break;
-        BeginDrawing();
-        ClearBackground(WHITE);
-        Runner_Draw();
-        EndDrawing();
-    }
-    Runner_Free();
-    CloseWindow();        // Close window and OpenGL
-    return 0;
-}
+// //------------------ main -------------------
+// int main(int narg,char** sarg)
+// {
+//     // Initialization
+//     //--------------------------------------------------------------------------------------
+//    // float fraq = GetMonitorWidth(0)/GetMonitorHeight(0);
+//     const int screenWidth = (720*4)/3; //GetMonitorWidth(0);
+//     const int screenHeight = 720;//GetMonitorHeight(0);
+//     InitWindow(screenWidth, screenHeight, EGBA_TITLE);
+//     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
+//     SetWindowIcon(icon);
+//
+//     Runner_Init(narg,sarg);
+//
+//     while (!WindowShouldClose())    // Detect window close button or ESC key
+//     {
+//         if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
+//             break;
+//         BeginDrawing();
+//         ClearBackground(WHITE);
+//         Runner_Draw();
+//         EndDrawing();
+//     }
+//     Runner_Free();
+//     CloseWindow();        // Close window and OpenGL
+//     return 0;
+// }

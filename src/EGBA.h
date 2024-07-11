@@ -1,9 +1,10 @@
 #pragma once
 #include "raylib.h"
-#define EGBA_VERSION "a1.5"
+#define EGBA_VERSION "a1.5-2"
 #define EGBA_TITLE TextFormat("GBA engine ver %s by magnus oblerion",EGBA_VERSION)
 
-#define EGBA_RUN_NAME "r_egba"
+#define EGBA_RUN_NAME "egba"
+#define EGBA_EDIT_NAME "egba"
 
 #define EGBA_MAX_PROJECT 100
 #define EGBA_MAX_COLOR_PALETTE 32
