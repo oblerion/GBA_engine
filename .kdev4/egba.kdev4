@@ -42,3 +42,6 @@ Enabled=false
 Environment=
 Executable=
 Type=4
+
+[Project]
+VersionControlSupport=kdevgit

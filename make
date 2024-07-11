@@ -34,6 +34,18 @@ function init()
 	TEXEC="$4";#out exec
 	TDOBJ="$5";#obj dir 
 }
+function comp1()
+{
+	cd $DSRC;
+	file=$1;
+	out="$TDOBJ${file:0:-2}.o";
+	#rm -f $out;
+	#echo rm -f $out;
+	command $TCC -c $1 $TINC -g -Wall -o ../$out;
+	echo $TCC -c $1 $TINC -o ../$out;
+	TLINK="$TLINK $out";
+	cd ..
+}
 function comp(){
 	local out;
 	cd $DSRC
@@ -55,12 +67,23 @@ function link(){
 if [ $# -eq 0 ];then 
 # default
 	rm -f $TEXEC;
-	init "$CC" "$INC" "$CFLAGS" "$EXEC" "$DOBJ";
-	comp;
+	init "$CC" "$INC" "$CFLAGS" "e_egba" "$DOBJ";
+	comp1 "Editor.c";
 	link;
+	TLINK=""
+	init "$CC" "$INC" "$CFLAGS" "r_egba" "$DOBJ";
+	comp1 "Runner.c";
+	comp1 "clua.c";
+	link;
+
 elif [ "$1" == "w" ];then
-	init "$CC2" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
-	comp;
+	init "$CC2" "$INC2" "$CFLAGS2" "e_egba.exe" "$DOBJ2";
+	comp1 "Editor.c";
+	link;
+	TLINK=""
+	init "$CC2" "$INC2" "$CFLAGS2" "r_egba.exe" "$DOBJ2";
+	comp1 "Runner.c";
+	comp1 "clua.c";
 	link;
 elif [ "$1" == "web" ];then
 	DEXEC="build/web"
