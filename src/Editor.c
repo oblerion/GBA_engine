@@ -4,24 +4,6 @@
 #include "EGBA.h"
 #include "../cimg.h"
 
-struct segba_data Editor_data;
-struct segba_atlas Editor_atlas;
-//------------------ config editor
-struct sconfig
-{
-    Color color1;
-    Color color2;
-};
-
-struct suiconfig
-{
-    struct sconfig config;
-    char isactive;
-    float timer;
-}_UICONFIG;
-
-#define UICONFIG_COL1() (_UICONFIG.config.color1)
-#define UICONFIG_COL2() (_UICONFIG.config.color2)
 
 // ---------------------- ext lib
 #define _MATH_collide(x,y,w,h,x2,y2,w2,h2) (x+w>x2 && x<x2+w2 && y+h>y2 && y2+h2>y)
@@ -114,254 +96,27 @@ bool UI_SLIDEBAR_V_draw(struct UI_SLIDEBAR_V* bar)
     return ret;
 }
 
-//---------- palette -----------
-
-
-struct Palette PaletteF(const char *pfile)
-{
-    struct Palette pal={"",{BLACK}};
-    const char* cext = GetFileExtension(pfile);
-    if(TextIsEqual(cext,".png"))
-    {
-
-        Image img = LoadImage(pfile);;
-        if(img.width<=32 && img.height==1)
-        {
-            strcpy(pal.name,GetFileNameWithoutExt(pfile));
-            for(int i=0;i<img.width;i++)
-            {
-                Color col = GetImageColor(img,i,0);
-                pal.data[i]=col;
-            }
-        }
-        UnloadImage(img);
-    }
-    return pal;
-}
-
-Color Palette_Get(struct Palette pal, int id)
-{
-    if(id<0 || id>EGBA_MAX_COLOR_PALETTE) return WHITE;
-    return pal.data[id];
-}
-void Palette_Copy(struct Palette* dest,struct Palette sou)
-{
-	*dest = sou;
-}
-const char *Palette_GetName(struct Palette pal)
-{
-    return TextFormat("%s",pal.name);
-}
-
-Image Palette_GetImg(struct Palette pal)
-{
-    Image img = GenImageColor(32,1,BLACK);
-    for(int i=0;i<EGBA_MAX_COLOR_PALETTE;i++)
-    {
-        ImageDrawPixel(&img,i,0,pal.data[i]);
-    }
-    return img;
-}
 
 //--------- sprite --------
 
-struct Sprite Sprite()
-{
-	struct Sprite spr={16,16};
-	for(int i=0;i<spr.width*spr.height;i++)
-	{
-		spr.data[i]=BLACK;
-	}
-	return spr;
-}
-void Sprite_SetData(struct Sprite* spr,int x,int y,Color col)
-{
-    spr->data[(y*spr->width)+x]=col;
-}
-
-Image Sprite_GetImg(struct Sprite spr)
-{
-    Image img = GenImageColor(spr.width,spr.height,BLACK);
-    for(int i=0;i<spr.width*spr.height;i++)
-	{
-        ImageDrawPixel(&img,i%spr.width,i/spr.width,spr.data[i]);
-	}
-    return img;
-}
-
-//----- atlas  ------------
-
-
-void Atlas_Init()
-{
-    Image img = GenImageColor(32,5,BLACK);
-    Editor_atlas.palettes = LoadTextureFromImage(img);
-    UnloadImage(img);
-
-    img = GenImageColor(256,256,BLACK);
-    Editor_atlas.sprites = LoadTextureFromImage(img);
-    UnloadImage(img);
-}
-
-void Atlas_DrawPalette(int id, int x, int y, int scale)
-{
-    if(id>-1 && id<6)
-    {
-        DrawRectangleLines(x-2,y-2,(32*scale)+4,scale+4,UICONFIG_COL2());
-        DrawTexturePro(Editor_atlas.palettes,(Rectangle){0,id,32,1},(Rectangle){x,y,32*scale,scale},(Vector2){0,0},0,WHITE);
-    }
-
-}
-void Atlas_UpdatePalette(struct Palette* palettes)
-{
-    Image img = GenImageColor(32,5,BLACK);
-    Image palimg;
-    for(int i=0;i<EGBA_MAX_PALETTE;i++)
-    {
-        palimg = Palette_GetImg(palettes[i]);
-        ImageDraw(&img,palimg,(Rectangle){0,0,32,1},(Rectangle){0,i,32,1},WHITE);
-    }
-    UpdateTexture(Editor_atlas.palettes,img.data);
-    UnloadImage(palimg);
-    UnloadImage(img);
-}
-void Atlas_DrawSprite(int id,int x,int y,int scale)
-{
-    DrawTexturePro(Editor_atlas.sprites,
-        (Rectangle){(id%16)*16,(id/16)*16,16,16},
-        (Rectangle){x,y,16*scale,16*scale},(Vector2){0,0},0,WHITE);
-}
-void Atlas_UpdateSprite(struct Sprite* sprites)
-{
-    Image img = GenImageColor(256,256,(Color){0,0,0,0});
-    for(int i=0;i<EGBA_MAX_SPRITE;i++)
-    {
-        Image imgspr = Sprite_GetImg(sprites[i]);
-        ImageDraw(&img,imgspr,
-            (Rectangle){0,0,16,16},
-            (Rectangle){(i%16)*16,(i/16)*16,16,16},
-            WHITE
-        );
-        UnloadImage(imgspr);
-    }
-    UpdateTexture(Editor_atlas.sprites,img.data);
-    UnloadImage(img);
-}
-
-void Atlas_Free()
-{
-    UnloadTexture(Editor_atlas.palettes);
-    UnloadTexture(Editor_atlas.sprites);
-}
-
-
-void UI_Palette_Init(struct segba_data* data)
-{
-    for(int i=0;i<EGBA_MAX_PALETTE;i++)
-        strcpy(data->palettes[i].name,"");
-    data->palette_nb=0;
-}
-void UI_palette_LoadF(struct segba_data* data, const char* pfile)
-{
-    if(TextIsEqual(GetFileExtension(pfile),".png"))
-    {
-        Image img = LoadImage(pfile);
-        if(img.width>0 && img.width<=32 && img.height==1)
-        {
-            if(data->palette_nb<EGBA_MAX_PALETTE)
-            {
-                    data->palettes[data->palette_nb] = PaletteF(pfile);
-                    Atlas_UpdatePalette(data->palettes);
-                    data->palette_nb+=1;
-            }
-        }
-        // else if(img.width==256 && img.height==256)
-        // {
-        //     struct Palette pal = {{0},{BLACK}};
-        //     pal.data[0]=UICONFIG_COL1();
-        //     pal.data[1]=UICONFIG_COL2();
-        //     data->palettes[0]=pal;
-        //     data->palette_nb=0;
-        //     Atlas_UpdatePalette(data->palettes);
-        // }
-        else if(img.width==256 && img.height==257)
-        {
-            for(int i=0;i<160;i++)
-            {
-                strcpy(data->palettes[i/32].name,TextFormat("%d",i/32));
-                Color col = GetImageColor(img,i,256);
-                data->palettes[i/32].data[i%32]=col;//i-((i/32)*32)]=col;
-            }
-            Atlas_UpdatePalette(data->palettes);
-            data->palette_nb=5;
-        }
-        UnloadImage(img);
-    }
-}
-void UI_Palette_LoadD(struct segba_data* ddata,struct segba_data sdata)
-{
-    for(int j=0;j<EGBA_MAX_PALETTE;j++)
-    {
-        strcpy(ddata->palettes[j].name,
-        sdata.palettes[j].name);
-        for(int i=0;i<EGBA_MAX_PALETTE;i++)
-        {
-            ddata->palettes[j].data[i] = sdata.palettes[j].data[i];
-        }
-    }
-    Atlas_UpdatePalette(ddata->palettes);
-    ddata->palette_nb=5;
-}
-void UI_Palette_Save(struct segba_data* sdata)
-{
-    // for(int i=0;i<EGBA_MAX_PALETTE;i++)
-    // {
-    //     strcpy(sdata->palette_name[i],
-    //     UI_Palette.palettes[i].name);
-    //     for(int j=0;j<EGBA_MAX_COLOR_PALETTE;j++)
-    //     {
-    //         sdata->palette_data[(i*EGBA_MAX_COLOR_PALETTE)+j] = UI_Palette.palettes[i].data[j];
-    //     }
-    // }
-}
-struct Palette UI_Palette_Get(struct segba_data data,int id)
-{
-    return data.palettes[id];
-}
-void UI_Palette_DelPal(struct segba_data* data, int id)
-{
-    if(id==data->palette_nb)
-    {
-        data->palette_nb-=1;
-    }
-    else if(id<data->palette_nb)
-    {
-        for(int i=id;i<data->palette_nb;i++)
-        {
-            Palette_Copy(&data->palettes[i],data->palettes[i+1]);
-        }
-        Atlas_UpdatePalette(data->palettes);
-        data->palette_nb-=1;
-    }
-}
-int UI_Palette_Draw(struct segba_data* data, int px,int py,int pscale)
+int UI_Palette_Draw(int px,int py,int pscale)
 {
     int ret=-1;
     const int yborder = 30;
     // UI button,scroll
-    int nbpalette=data->palette_nb;
+    int nbpalette=Data_Palette_GetNd();
 
     if(nbpalette>0)
     {
         for(int j=0;j<nbpalette;j++)
         {
 			Atlas_DrawPalette(j,px+23,py+yborder+23+(j*45),pscale);
-			DrawText(data->palettes[j].name,px+5,py+yborder+(j*45)+5,10,UICONFIG_COL2());
+			DrawText(Data_Palette_GetName(j),px+5,py+yborder+(j*45)+5,10,UICONFIG_COL2());
 			if(CheckCollisionPointRec(GetMousePosition(), (Rectangle){px+23,py+(float)yborder+23+(j*45),32*pscale,pscale}))
 			{
 				if(UIBUTTON((pscale-1)*32,py+yborder+21+(j*45)+2,"delete",pscale+4,UICONFIG_COL2()))
 				{
-				   UI_Palette_DelPal(data,j);
+				   Data_Palette_DelPal(j);
 				}
 			}
         }
@@ -393,7 +148,7 @@ int UI_BUTTONSPRITE_Draw(struct UI_BUTTONSPRITE btnspr)
     int ret=0;
     if(btnspr.visible)
     {
-        Atlas_DrawSprite(btnspr.id_sprite,btnspr.x,btnspr.y,btnspr.scale);
+        Atlas_DrawSprite( btnspr.id_sprite,btnspr.x,btnspr.y,btnspr.scale);
         int ix = GetMouseX();
         int iy = GetMouseY();
         if(_MATH_collide(ix,iy,1,1,
@@ -435,95 +190,26 @@ int UISprite_curantsprite=0;
 struct UI_BUTTONSPRITE UISprite_btnspr[EGBA_MAX_SPRITE];
 const int UISprite_btnspr_size = 2;
 const int UISprite_btncol_size = 26;
-void UI_Sprite_Init(struct segba_data* data)
+void UI_Sprite_Init()
 {
     //struct UI_Sprite uispr;
 	//UI_Sprite.slidepalette = UI_SLIDEBAR_V(420,460,10,50,5);
     const int size = 16;
 
+    Data_Sprite_Init();
     for(int y=0;y<size;y++)
     for(int x=0;x<size;x++)
     {
-        data->sprites[(size*y)+x] = Sprite();
-        UISprite_btnspr[(size*y)+x] = UI_BUTTONSPRITE(440+(x*UISprite_btnspr_size*16),
-                                                    30+(y*UISprite_btnspr_size*16),
-                                                    UISprite_btnspr_size,
-                                                    (size*y)+x);
+       UISprite_btnspr[(size*y)+x] = UI_BUTTONSPRITE(440+(x*UISprite_btnspr_size*16),
+        30+(y*UISprite_btnspr_size*16),
+        UISprite_btnspr_size,
+        (size*y)+x);
     }
-    // fond spr
+       // fond spr
     UISprite_sprfond = LoadTextureFromImage(GenImageColor(26*16,26*16,UICONFIG_COL1()));
     UI_Sprite_GenSprFont();
 }
 
-struct Sprite UI_sprite_Get(struct segba_data data,int id)
-{
-    return data.sprites[id];
-}
-
-void UI_Sprite_LoadD(struct segba_data* ddata,struct segba_data sdata)
-{
-    // for(int i=0;i<EGBA_MAX_SPRITE;i++)
-    // for(int j=0;j<EGBA_MAX_COLOR_SPRITE;j++)
-    // {
-    //     int mapid = sdata.sprite_mapid[i][j];
-    //     if(mapid<0)
-    //         UI_Sprite.sprites[i].data[j] = (Color){0,0,0,0};
-    //     else
-    //         UI_Sprite.sprites[i].data[j] =  sdata.palette_data[mapid];
-    // }
-    for(int i=0;i<EGBA_MAX_SPRITE;i++)
-    {
-        ddata->sprites[i] = sdata.sprites[i];
-    }
-    Atlas_UpdateSprite(ddata->sprites);
-}
-
-void UI_sprite_LoadF(struct segba_data* data, const char *pfile)
-{
-    Image fullimg = LoadImage(pfile);
-    if(fullimg.width==256 && fullimg.height==257)
-    {
-
-        for(int i=0;i<16;i++)
-        for(int j=0;j<16;j++)
-        {
-            Image img = GenImageColor(16,16,(Color){0,0,0,0});
-            ImageDraw(&img,fullimg,
-                    (Rectangle){j*16,i*16,16,16},
-                    (Rectangle){0,0,16,16},WHITE);
-
-            Color* img_col = (Color*)img.data;
-            for(int col=0;col<256;col++)
-            data->sprites[(i*16)+j].data[col] = img_col[col];
-            UnloadImage(img);
-        }
-        Atlas_UpdateSprite(data->sprites);
-
-    }
-    UnloadImage(fullimg);
-}
-
-void UI_Sprite_Save(struct segba_data *sdata)
-{
-    // for(int i=0;i<EGBA_MAX_SPRITE;i++)
-    // for(int j=0;j<EGBA_MAX_COLOR_SPRITE;j++)
-    // {
-    //     sdata->sprite_mapid[i][j]=-1;
-    //     for(int i2=0;i2<EGBA_MAX_PALETTE;i2++)
-    //     for(int j2=0;j2<EGBA_MAX_COLOR_PALETTE;j2++)
-    //     {
-    //         int icolpal = ColorToInt(UI_Palette.palettes[i2].data[j2]);
-    //         int icolspr = ColorToInt(UI_Sprite.sprites[i].data[j]);
-    //         if(icolpal==icolspr)
-    //         {
-    //
-    //             sdata->sprite_mapid[i][j] = (i2*EGBA_MAX_COLOR_PALETTE)+j2;
-    //             break;
-    //             break;
-    //         }
-    //     }
-    // }
-}
 
 int UI_Sprite_Draw()
 {
@@ -549,106 +235,17 @@ void UI_Sprite_Free()
 }
 
 
-void UI_Script_LoadF(struct segba_data* data, const char* pfile)
-{
-    FILE* fic = fopen(pfile,"r");
-    if(fic!=NULL)
-    {
-        fseek(fic,SEEK_END,0);
-        long pos = ftell(fic);
-        fseek(fic,SEEK_SET,0);
-        int p=0;
-        strcpy(data->script,"\0");
-        if(pos<EGBA_MAX_SCRIPTSIZE)
-        {
-            do
-            {
-                fscanf(fic,"%c",&data->script[p]);
-                p++;
-            }
-            while(feof(fic)==0);
-        }
-        //strcpy(UI_Script.source_script,".lua");
-        fclose(fic);
-    }
-}
 
-void UI_Script_LoadD(struct segba_data* ddata,struct segba_data sdata)
-{
-    //strcpy(UI_Script.source_script,".dat");
-    strcpy(ddata->script,sdata.script);
-}
+
 
 // void UI_Script_Save(struct sdata *sdata)
 // {
 //     strcpy(sdata->script,UI_Script.script);
 // }
 
-void UI_Script_Draw(struct segba_data data)
+void UI_Script_Draw()
 {
-    DrawText(data.script,15,30,18,UICONFIG_COL2());
-}
-
-void UICONFIG_SetActive(char c)
-{
-    if(_UICONFIG.timer<=0)
-    {
-        _UICONFIG.isactive=c;
-        _UICONFIG.timer=0.001f;
-    }
-}
-
-void UICONFIG_SetYellowTheme()
-{
-    _UICONFIG.config.color1=(Color){130,145,2};
-    _UICONFIG.config.color2=YELLOW;
-}
-
-void UICONFIG_SetGreenTheme()
-{
-    _UICONFIG.config.color1=(Color){2,145,2};
-    _UICONFIG.config.color2=GREEN;
-}
-
-void UICONFIG_SetRedTheme()
-{
-    _UICONFIG.config.color1=(Color){145,2,2};
-    _UICONFIG.config.color2=RED;
-}
-void UICONFIG_SetBlueTheme()
-{
-    _UICONFIG.config.color1=(Color){2,2,175};
-    _UICONFIG.config.color2=BLUE;
-}
-
-void UICONFIG_SetWhiteTheme()
-{
-    _UICONFIG.config.color1=WHITE;
-    _UICONFIG.config.color2=LIGHTGRAY;
-}
-
-void UICONFIG_SetBlackTheme()
-{
-    _UICONFIG.config.color1=BLACK;
-    _UICONFIG.config.color2=DARKGRAY;
-}
-
-void UICONFIG_Save()
-{
-    FILE* fic = fopen(".egba.conf","wb");
-    fwrite(&_UICONFIG.config,sizeof(struct sconfig),1,fic);
-    fclose(fic);
-    UI_Sprite_GenSprFont();
-}
-
-void UICONFIG_Load()
-{
-    FILE* fic = fopen(".egba.conf","rb");
-    if(fic!=NULL)
-    {
-        fread(&_UICONFIG.config,sizeof(struct sconfig),1,fic);
-        fclose(fic);
-    }
+    Data_Script_Draw(15,30,UICONFIG_COL2());
 }
 
 void UICONFIG_Init()
@@ -659,7 +256,7 @@ void UICONFIG_Init()
 
 void UICONFIG_Draw(int x,int y)
 {
-    if(_UICONFIG.isactive==1)
+    if(UICONFIG_Timer())
     {
 		DrawText("Setting",23,5,25,UICONFIG_COL2());
 		DrawRectangleLines(4,31,951,682,UICONFIG_COL2());
@@ -668,40 +265,43 @@ void UICONFIG_Draw(int x,int y)
         {
             UICONFIG_SetWhiteTheme();
             UICONFIG_Save();
+            UI_Sprite_GenSprFont();
         }
         if(UIBUTTON(x+148,y+35,"black",20,DARKGRAY))
         {
             UICONFIG_SetBlackTheme();
             UICONFIG_Save();
+            UI_Sprite_GenSprFont();
         }
 
         if(UIBUTTON(x+218,y+35,"blue",20,BLUE))
         {
             UICONFIG_SetBlueTheme();
             UICONFIG_Save();
+            UI_Sprite_GenSprFont();
         }
 
         if(UIBUTTON(x+278,y+35,"red",20,RED))
         {
             UICONFIG_SetRedTheme();
             UICONFIG_Save();
+            UI_Sprite_GenSprFont();
         }
 
         if(UIBUTTON(x+328,y+35,"green",20,GREEN))
         {
             UICONFIG_SetGreenTheme();
             UICONFIG_Save();
+            UI_Sprite_GenSprFont();
         }
 
         if(UIBUTTON(x+408,y+35,"yellow",20,YELLOW))
         {
             UICONFIG_SetYellowTheme();
             UICONFIG_Save();
+            UI_Sprite_GenSprFont();
         }
     }
-
-    if(_UICONFIG.timer>0)
-        _UICONFIG.timer -= GetFrameTime();
 }
 
 struct sproject
@@ -719,13 +319,13 @@ typedef struct sproject Project;
 
 void PROJECT_LoadSprite(Project ppjt)
 {
-	UI_palette_LoadF(&Editor_data, PROJECT_GetFilePng(ppjt));
-    UI_sprite_LoadF(&Editor_data, PROJECT_GetFilePng(ppjt));
+	Data_Palette_LoadF(PROJECT_GetFilePng(ppjt));
+    Data_Sprite_LoadF(PROJECT_GetFilePng(ppjt));
 }
 
 void PROJECT_LoadScript(Project ppjt)
 {
-	UI_Script_LoadF(&Editor_data, PROJECT_GetFileLua(ppjt));
+	Data_Script_LoadF(PROJECT_GetFileLua(ppjt));
 }
 
 char PROJECT_LoadEgba(Project ppjt)
@@ -734,22 +334,15 @@ char PROJECT_LoadEgba(Project ppjt)
 	FILE* fic = fopen(PROJECT_GetFileEgba(ppjt),"rb");
 	fread(&lsdata,sizeof(struct segba_data),1,fic);
 	fclose(fic);
-	UI_Palette_LoadD(&Editor_data,lsdata);
-	UI_Sprite_LoadD(&Editor_data,lsdata);
-	UI_Script_LoadD(&Editor_data,lsdata);
+	Data_Palette_LoadD(lsdata);
+	Data_Sprite_LoadD(lsdata);
+	Data_Script_LoadD(lsdata);
     return lsdata.islock;
 }
 
-void PROJECT_BuildEgba(Project ppjt,char islock)
+void PROJECT_BuildEgba(Project ppjt,char lock)
 {
-	// struct segba_data lsdata={0};
- //    lsdata.islock = islock;
-	// UI_Palette_Save(&lsdata);
-	// UI_Sprite_Save(&lsdata);
-	// strcpy(lsdata.script,Editor_data.script);
-	FILE* fic = fopen(PROJECT_GetFileEgba(ppjt),"wb");
-	fwrite(&Editor_data,sizeof(struct segba_data),1,fic);
-	fclose(fic);
+	Data_BuildEgba(PROJECT_GetFileEgba(ppjt),lock);
 }
 
 void PROJECT_BuildExec(Project ppjt)
@@ -799,51 +392,12 @@ void PROJECT_BuildExec(Project ppjt)
 
 void PROJECT_ExportSprite(Project ppjt)
 {
-    if(Editor_data.palette_nb>0)
-    {
-        Image fullimg = GenImageColor(256,257,(Color){0,0,0,0});
-        for(int y=0;y<16;y++)
-        for(int x=0;x<16;x++)
-        {
-            Image img = Sprite_GetImg(Editor_data.sprites[(y*16)+x]);
-            Rectangle rso = {0,0,16,16};
-            Rectangle rde = {x*16,y*16,16,16};
-            ImageDraw(&fullimg,img,rso,rde,WHITE);
-            UnloadImage(img);
-        }
-        for(int i=0;i<5;i++)
-        {
-            for(int j=0;j<32;j++)
-            {
-                ImageDrawPixel(&fullimg,(i*32)+j,256,Palette_Get(Editor_data.palettes[i],j));
-            }
-        }
-        ExportImage(fullimg,PROJECT_GetFilePng(ppjt));
-        UnloadImage(fullimg);
-    }
-    else
-    {
-        Image fullimg = GenImageColor(256,256,(Color){0,0,0,0});
-        for(int y=0;y<16;y++)
-        for(int x=0;x<16;x++)
-        {
-            Image img = Sprite_GetImg(Editor_data.sprites[(y*16)+x]);
-            Rectangle rso = {0,0,16,16};
-            Rectangle rde = {x*16,y*16,16,16};
-            ImageDraw(&fullimg,img,rso,rde,WHITE);
-            UnloadImage(img);
-        }
-        ExportImage(fullimg,PROJECT_GetFilePng(ppjt));
-        UnloadImage(fullimg);
-    }
-
+    Data_ExportSprite(PROJECT_GetFilePng(ppjt));
 }
 
 void PROJECT_ExportScript(Project ppjt)
 {
-    FILE* fic = fopen(PROJECT_GetFileLua(ppjt),"w");
-    fprintf(fic,"%s",Editor_data.script);
-    fclose(fic);
+    Data_ExportScript(PROJECT_GetFileLua(ppjt));
 }
 #include "Runner.h"
 char PROJECT_DebugInit(Project ppjt)
@@ -1125,7 +679,7 @@ void UIPROJECT_DrawInfo()
     DrawText("[ctrl]+[i] import sprite/script from egba",10,360,20,UICONFIG_COL2());
     DrawText("[ctrl]+[e] export sprite/script to egba",10,390,20,UICONFIG_COL2());
     DrawText("[ctrl]+[l] export sprite/script to lock egba",10,420,20,UICONFIG_COL2());
-    DrawText("[ctrl]+[b] create binairy from egba",10,450,20,UICONFIG_COL2());
+    // DrawText("[ctrl]+[b] create binairy from egba",10,450,20,UICONFIG_COL2());
 }
 
 void UIPROJECT_Draw()
@@ -1186,7 +740,6 @@ void UIPROJECT_Draw()
                     )
 					{
                         puts("[EGBA] : sprite/script -> egba ...");
-						Editor_data.islock=0;
                         PROJECT_BuildEgba(lproject,0);
                         puts("[EGBA] : done");
                         UIPROJECT_Update();
@@ -1195,7 +748,6 @@ void UIPROJECT_Draw()
 					if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_L))
                     {
                         puts("[EGBA] : sprite/script -> lock egba ...");
-                        Editor_data.islock=1;
 						PROJECT_BuildEgba(lproject,1);
                         puts("[EGBA] : done");
                         UIPROJECT_Update();
@@ -1220,14 +772,14 @@ void UIPROJECT_Draw()
                             printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileEgba(lproject));
 					}
 
-					if(UIBUTTON(350,90,"export bin",20,UICONFIG_COL2()) ||
-                        (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_B))
-                    )
-                    {
-                        puts("[EGBA] : export bin ...");
-                        PROJECT_BuildExec(lproject);
-                        puts("[EGBA] : done");
-                    }
+					// if(UIBUTTON(350,90,"export bin",20,UICONFIG_COL2()) ||
+     //                    (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_B))
+     //                )
+     //                {
+     //                    puts("[EGBA] : export bin ...");
+     //                    PROJECT_BuildExec(lproject);
+     //                    puts("[EGBA] : done");
+     //                }
 
                     if(_UIPROJECT.islock==0)
                     {
@@ -1267,33 +819,37 @@ void UIPROJECT_Draw()
                     for(int i=0;i<files.count;i++)
                     {
                         printf("\n[EGBA] : load sprite %s ...\n",files.paths[i]);
-                        UI_palette_LoadF(&Editor_data,files.paths[i]);
-                        UI_sprite_LoadF(&Editor_data,files.paths[i]);
+                        Data_Palette_LoadF(files.paths[i]);
+                        Data_Sprite_LoadF(files.paths[i]);
                         puts("[EGBA] : done");
                     }
                     UnloadDroppedFiles(files);
                 }
                 UI_Sprite_Draw();
-				UI_Palette_Draw(&Editor_data,0,430,12);
+				UI_Palette_Draw(0,430,12);
 			break;
 			case UIPROJECT_STATE_VSCRIPT:
 				if(UIBUTTON(5,5,"back",20,UICONFIG_COL2()))
 				{
 					_UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
 				}
-				UI_Script_Draw(Editor_data);
+				UI_Script_Draw();
 			break;
 			case UIPROJECT_STATE_VRUNNER:
                 if(Runner_IsDown())
+                {
+                    if(Runner_IsDebug())
+                    {
+                        puts("[EGBA][DEBUG END]");
+                    }
+                    else
+                    {
+                        puts("[EGBA][RUN END]");
+                    }
                     _UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
+                }
                 else
                     Runner_Draw();
-			// 	// UI_Runner_Draw();
-			// 	// if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
-			// 	// {
-			// 	// 	_UIPROJECT.state = UIPROJECT_STATE_DEFAULT;
-   //  //                 puts("[EGBA][DEBUG/RUN END]");
-			// 	// }
 			break;
 			default:;
 		};
@@ -1317,9 +873,9 @@ char Editor_Init(int narg,char** sarg)
         //init
         Atlas_Init();
         UICONFIG_Init();
-        UI_Palette_Init(&Editor_data);
-        UI_Sprite_Init(&Editor_data);
-        Editor_data.script[0]='\0';
+        Data_Palette_Init();
+        UI_Sprite_Init();
+        Data_Script_Init();
         UIPROJECT_LoadIcons();
         BROWSER_Init();
         return 1;
@@ -1339,7 +895,7 @@ void Editor_Draw()
             OpenURL("https://oblerion.itch.io/gba-engine");
         }
 
-        if(_UICONFIG.isactive==0)
+        if(!UICONFIG_GetActive())
         {
             if(UIBUTTON(800,5,"setting",20,UICONFIG_COL2()))
             {
@@ -1368,28 +924,3 @@ void Editor_Free()
     UIPROJECT_Free();
     Atlas_Free();
 }
-
-// int main(int narg,char** sarg)
-// {
-//     // Initialization
-//     //--------------------------------------------------------------------------------------
-//    // float fraq = GetMonitorWidth(0)/GetMonitorHeight(0);
-//     const int screenWidth = (720*4)/3; //GetMonitorWidth(0);
-//     const int screenHeight = 720;//GetMonitorHeight(0);
-//     InitWindow(screenWidth, screenHeight, EGBA_TITLE);
-//     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
-//     SetWindowIcon(icon);
-//
-//     Editor_Init();
-//
-//     while (!WindowShouldClose())    // Detect window close button or ESC key
-//     {
-//         BeginDrawing();
-//         ClearBackground(UICONFIG_COL1());
-//         Editor_Draw();
-//         EndDrawing();
-//     }
-//     Editor_Free();
-//     CloseWindow();        // Close window and OpenGL
-//     return 0;
-// }

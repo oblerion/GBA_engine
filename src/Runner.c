@@ -1,171 +1,154 @@
 #include "EGBA.h"
 #include "clua.h"
+#include "Runner.h"
 //------------- runner -------------------
 //#include "ui_runner.h"
 
+char UIRun_isload=0;
 char UIRun_isdebug=0;
 int UIRun_paletteid=0;
-struct segba_data UIRun_data;
-struct segba_atlas UIRun_atlas;
+char UIRun_ext[5];
+char UIRun_name[50];
 struct CLUA UIRun_clua;
 
 struct Palette GetPalette()
 {
-    return UIRun_data.palettes[UIRun_paletteid];
-}
-Image R_Palette_GetImg(struct Palette pal)
-{
-    Image img = GenImageColor(32,1,BLACK);
-    for(int i=0;i<EGBA_MAX_COLOR_PALETTE;i++)
-    {
-        ImageDrawPixel(&img,i,0,pal.data[i]);
-    }
-    return img;
-}
-Image R_Sprite_GetImg(struct Sprite spr)
-{
-    Image img = GenImageColor(spr.width,spr.height,BLACK);
-    for(int i=0;i<spr.width*spr.height;i++)
-	{
-        ImageDrawPixel(&img,i%spr.width,i/spr.width,spr.data[i]);
-	}
-    return img;
-}
-void R_Atlas_Init()
-{
-    Image img = GenImageColor(32,5,BLACK);
-    UIRun_atlas.palettes = LoadTextureFromImage(img);
-    UnloadImage(img);
-
-    img = GenImageColor(256,256,BLACK);
-    UIRun_atlas.sprites = LoadTextureFromImage(img);
-    UnloadImage(img);
-}
-void R_Atlas_UpdatePalette(struct Palette* palettes)
-{
-    Image img = GenImageColor(32,5,BLACK);
-    Image palimg;
-    for(int i=0;i<EGBA_MAX_PALETTE;i++)
-    {
-        palimg = R_Palette_GetImg(palettes[i]);
-        ImageDraw(&img,palimg,(Rectangle){0,0,32,1},(Rectangle){0,i,32,1},WHITE);
-    }
-    UpdateTexture(UIRun_atlas.palettes,img.data);
-    UnloadImage(palimg);
-    UnloadImage(img);
+    return Data_Palette_Get(UIRun_paletteid);
 }
 
-void R_Atlas_UpdateSprite(struct Sprite* sprites)
+// interverse
+int rlua_run(clua_state* L)
 {
-    Image img = GenImageColor(256,256,(Color){0,0,0,0});
-    for(int i=0;i<EGBA_MAX_SPRITE;i++)
+    const char* cstr = lua_tostring(L,1);
+    if(Runner_Load(cstr))
     {
-        Image imgspr = R_Sprite_GetImg(sprites[i]);
-        ImageDraw(&img,imgspr,
-            (Rectangle){0,0,16,16},
-            (Rectangle){(i%16)*16,(i/16)*16,16,16},
-            WHITE
-        );
-        UnloadImage(imgspr);
+
     }
-    UpdateTexture(UIRun_atlas.sprites,img.data);
-    UnloadImage(img);
+    return 0;
 }
-void R_Atlas_DrawSprite(int id,int x,int y,int scale)
+struct segba_saving _rlua_GetSave(const char* cname)
 {
-    DrawTexturePro(UIRun_atlas.sprites,
-        (Rectangle){(id%16)*16,(id/16)*16,16,16},
-        (Rectangle){x,y,16*scale,16*scale},(Vector2){0,0},0,WHITE);
-}
-void R_Atlas_Free()
-{
-    UnloadTexture(UIRun_atlas.palettes);
-    UnloadTexture(UIRun_atlas.sprites);
-}
-void R_UI_Palette_Init(struct segba_data* data)
-{
-    for(int i=0;i<EGBA_MAX_PALETTE;i++)
-        strcpy(data->palettes[i].name,"");
-    data->palette_nb=0;
-}
-void R_UI_palette_LoadF(struct segba_data* data, const char* pfile)
-{
-    if(TextIsEqual(GetFileExtension(pfile),".png"))
+    struct segba_saving ssave={0};
+    FILE* fic= fopen(TextFormat("%s.sav",cname),"rb");
+    if(fic!=NULL)
     {
-        Image img = LoadImage(pfile);
-        if(img.width==256 && img.height==257)
-        {
-            for(int i=0;i<EGBA_MAX_PALETTE;i++)
-            for(int j=0;j<EGBA_MAX_COLOR_PALETTE;j++)
-            {
-                //strcpy(data->palettes[i].name,TextFormat("%d",i));
-                Color col = GetImageColor(img,i*32+j,256);
-                data->palettes[i].data[j]=col;
-            }
-            R_Atlas_UpdatePalette(data->palettes);
-            data->palette_nb=5;
-        }
-        UnloadImage(img);
+        fread(&ssave,sizeof(struct segba_saving),1,fic);
+        fclose(fic);
     }
-}
-void R_UI_Palette_LoadD(struct segba_data* ddata,struct segba_data sdata)
-{
-    for(int j=0;j<EGBA_MAX_PALETTE;j++)
-    {
-        strcpy(ddata->palettes[j].name,
-        sdata.palettes[j].name);
-        for(int i=0;i<EGBA_MAX_COLOR_PALETTE;i++)
-        {
-            ddata->palettes[j].data[i] = sdata.palettes[j].data[i];
-        }
-    }
-    R_Atlas_UpdatePalette(ddata->palettes);
-    ddata->palette_nb=5;
+    return ssave;
 }
 
-void R_UI_sprite_LoadF(struct segba_data* data, const char *pfile)
+int rlua_rsave_string_ext(clua_state* L)
 {
-    Image fullimg = LoadImage(pfile);
-    if(fullimg.width==256 && fullimg.height==257)
+    const char* cname = lua_tostring(L,1);
+    int id = lua_tointeger(L,2);
+    if(id>-1 && id<SAVING_MAX_STRING)
     {
-        Image imgspr = ImageFromImage(fullimg,(Rectangle){0,0,256,256});
-        Color* lcol = (Color*)imgspr.data;
-        UpdateTexture(UIRun_atlas.sprites,lcol);
-        UnloadImage(imgspr);
-
-        for(int i=0;i<16;i++)
-        for(int j=0;j<16;j++)
-        {
-            Image img = GenImageColor(16,16,(Color){0,0,0,0});
-            ImageDraw(&img,fullimg,
-                    (Rectangle){j*16,i*16,16,16},
-                    (Rectangle){0,0,16,16},WHITE);
-
-            Color* img_col = (Color*)img.data;
-            for(int col=0;col<256;col++)
-            data->sprites[(i*16)+j].data[col] = img_col[col];
-            UnloadImage(img);
-        }
+        struct segba_saving saving = _rlua_GetSave(cname);
+        lua_pushstring(L,saving.strs[id]);
     }
-    UnloadImage(fullimg);
+    return 1;
 }
 
-void R_UI_Sprite_LoadD(struct segba_data* ddata,struct segba_data sdata)
+int rlua_rsave_bool_ext(clua_state* L)
 {
-    // for(int i=0;i<EGBA_MAX_SPRITE;i++)
-    // for(int j=0;j<EGBA_MAX_COLOR_SPRITE;j++)
-    // {
-    //     int mapid = sdata.sprite_mapid[i][j];
-    //     if(mapid<0)
-    //         UI_Sprite.sprites[i].data[j] = (Color){0,0,0,0};
-    //     else
-    //         UI_Sprite.sprites[i].data[j] =  sdata.palette_data[mapid];
-    // }
-    for(int i=0;i<EGBA_MAX_SPRITE;i++)
+    const char* cname = lua_tostring(L,1);
+    int id = lua_tointeger(L,2);
+    if(id>-1 && id<SAVING_MAX_BOOL)
     {
-        ddata->sprites[i] = sdata.sprites[i];
+        struct segba_saving saving = _rlua_GetSave(cname);
+        lua_pushboolean(L,(int)saving.bools[id]);
     }
-    R_Atlas_UpdateSprite(ddata->sprites);
+    return 1;
+}
+
+int rlua_rsave_numb_ext(clua_state* L)
+{
+    const char* cname = lua_tostring(L,1);
+    int id = lua_tointeger(L,2);
+    if(id>-1 && id<SAVING_MAX_NUMBER)
+    {
+        struct segba_saving saving = _rlua_GetSave(cname);
+        lua_pushnumber(L,saving.numbs[id]);
+    }
+    return 1;
+}
+
+//--------------------------------------
+
+int rlua_wsave_bool(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    int b = lua_toboolean(L,2);
+    if(id>-1 && id<SAVING_MAX_BOOL)
+    {
+        struct segba_saving saving = Saving_Get();
+        saving.bools[id] = b;
+        const char* cstr = TextFormat("%s%s",UIRun_name,UIRun_ext);
+        Saving_WriteSave(cstr,saving);
+    }
+    return 0;
+}
+
+int rlua_rsave_bool(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    if(id>-1 && id<SAVING_MAX_BOOL)
+    {
+        struct segba_saving saving = Saving_Get();
+        lua_pushboolean(L,(int)saving.bools[id]);
+    }
+    return 1;
+}
+
+int rlua_wsave_string(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    const char* str = lua_tostring(L,2);
+    if(id>-1 && id<SAVING_MAX_STRING)
+    {
+        struct segba_saving saving = Saving_Get();
+        strcpy(saving.strs[id],str);
+        const char* cstr = TextFormat("%s%s",UIRun_name,UIRun_ext);
+        Saving_WriteSave(cstr,saving);
+    }
+    return 0;
+}
+
+int rlua_rsave_string(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    if(id>-1 && id<SAVING_MAX_STRING)
+    {
+        struct segba_saving saving = Saving_Get();
+        lua_pushstring(L,saving.strs[id]);
+    }
+    return 1;
+}
+
+int rlua_wsave_numb(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    int n = lua_tonumber(L,2);
+    if(id>-1 && id<SAVING_MAX_NUMBER)
+    {
+        struct segba_saving saving = Saving_Get();
+        saving.numbs[id]=n;
+        const char* cstr = TextFormat("%s%s",UIRun_name,UIRun_ext);
+        Saving_WriteSave(cstr,saving);
+    }
+    return 0;
+}
+
+int rlua_rsave_numb(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    if(id>-1 && id<SAVING_MAX_NUMBER)
+    {
+        struct segba_saving saving = Saving_Get();
+        lua_pushnumber(L,saving.numbs[id]);
+    }
+    return 1;
 }
 
 int rlua_trace(clua_state* L)
@@ -201,7 +184,7 @@ int rlua_drawtext(clua_state* L)
     int x = lua_tonumber(L,2);
     int y = lua_tonumber(L,3);
 
-    struct Palette pal = UIRun_data.palettes[UIRun_paletteid];
+    struct Palette pal = Data_Palette_Get(UIRun_paletteid);
     Color col = pal.data[(int)lua_tonumber(L,4)];
     int scale = lua_tointeger(L,5);
     if(scale==0) scale=16;
@@ -217,7 +200,7 @@ int rlua_drawsprite(clua_state* L)
     int y = lua_tonumber(L,3);
     int scale = lua_tointeger(L,4);
     if(scale == 0) scale = 2;
-    R_Atlas_DrawSprite(id,x,y,scale);
+    Atlas_DrawSprite(id,x,y,scale);
     return 0;
 }
 
@@ -367,6 +350,17 @@ void _UI_Runner_functionpush(int (*pfunc)(clua_state*),const char* name)
 void UI_Runner()
 {
     UIRun_clua = CLUA();
+    _UI_Runner_functionpush(rlua_rsave_bool_ext,"rsave_bool_ext");
+    _UI_Runner_functionpush(rlua_rsave_string_ext,"rsave_string_ext");
+    _UI_Runner_functionpush(rlua_rsave_numb_ext,"rsave_numb_ext");
+    _UI_Runner_functionpush(rlua_run,"run");
+
+    _UI_Runner_functionpush(rlua_rsave_bool,"rsave_bool");
+    _UI_Runner_functionpush(rlua_wsave_bool,"wsave_bool");
+    _UI_Runner_functionpush(rlua_rsave_string,"rsave_string");
+    _UI_Runner_functionpush(rlua_wsave_string,"wsave_string");
+    _UI_Runner_functionpush(rlua_rsave_numb,"rsave_numb");
+    _UI_Runner_functionpush(rlua_wsave_numb,"wsave_numb");
     _UI_Runner_functionpush(rlua_cls,"cls");
     _UI_Runner_functionpush(rlua_drawtext,"text");
     _UI_Runner_functionpush(rlua_drawsprite,"spr");
@@ -380,100 +374,75 @@ void UI_Runner()
     _UI_Runner_functionpush(rlua_drawpix,"pix");
 	//uirun.isload=1;
 }
-void UI_Runner_LoadD(struct segba_data sdata)
-{
-    R_UI_Palette_LoadD(&UIRun_data, sdata);
-    R_UI_Sprite_LoadD(&UIRun_data, sdata);
-    strcpy(UIRun_data.script,sdata.script);
-    CLUA_dostring(&UIRun_clua,sdata.script);
-}
+// void UI_Runner_LoadD(struct segba_data sdata)
+// {
+//
+// }
 
 bool UI_Runner_Load(const char *pfile)
 {
-    const char* ext = GetFileExtension(pfile);
-    if(TextIsEqual(ext,".egba"))
+    if(FileExists(pfile))
     {
-        struct segba_data sdata;
-        FILE* fic = fopen(pfile,"rb");
-        if(fic!=NULL)
+         const char* ext = GetFileExtension(pfile);
+        if(TextIsEqual(ext,".egba"))
         {
-            UI_Runner();
-            UIRun_isdebug=0;
-            fread(&sdata,sizeof(struct segba_data),1,fic);
-            fclose(fic);
-			UI_Runner_LoadD(sdata);
-            return true;
+            strcpy(UIRun_ext,ext);
+            strcpy(UIRun_name,GetFileNameWithoutExt(pfile));
+            struct segba_data sdata;
+            FILE* fic = fopen(pfile,"rb");
+            if(fic!=NULL)
+            {
+                UI_Runner();
+                UIRun_isdebug=0;
+                fread(&sdata,sizeof(struct segba_data),1,fic);
+                fclose(fic);
+                Data_Palette_LoadD(sdata);
+                Data_Sprite_LoadD(sdata);
+                Data_Script_LoadD(sdata);
+                CLUA_dostring(&UIRun_clua,sdata.script);
+                Saving_LoadSave(pfile);
+                return true;
+            }
+            else puts(TextFormat("[EGBA] : runner error : %s not found",pfile));
         }
-        else puts(TextFormat("[EGBA] : runner error : %s not found",pfile));
-    }
-    else if(TextIsEqual(ext,".lua"))
-    {
-        const char* fileext = TextFormat("%s.png",GetFileNameWithoutExt(pfile));
-        if(FileExists(fileext))
+        else if(TextIsEqual(ext,".lua"))
         {
-            UI_Runner();
-            UIRun_isdebug=1;
-            // if(_EGBA.ifrunner==true)
-            // {
-				R_UI_palette_LoadF(&UIRun_data,fileext);
-				R_UI_sprite_LoadF(&UIRun_data, fileext);
-            // }
-
-            CLUA_dofile(&UIRun_clua,pfile);
-            return true;
-        }else puts(TextFormat("[EGBA] : runner error : %s not found",fileext));
+            strcpy(UIRun_ext,ext);
+            strcpy(UIRun_name,GetFileNameWithoutExt(pfile));
+            const char* fileext = TextFormat("%s.png",GetFileNameWithoutExt(pfile));
+            if(FileExists(fileext))
+            {
+                UI_Runner();
+                UIRun_isdebug=1;
+                Data_Palette_LoadF(fileext);
+                Data_Sprite_LoadF(fileext);
+                Data_Script_LoadF(pfile);
+                Saving_LoadSave(pfile);
+                CLUA_dofile(&UIRun_clua,pfile);
+                return true;
+            }else puts(TextFormat("[EGBA] : runner error : %s not found",fileext));
+        }
     }
     return false;
 }
 
-void UI_Runner_Draw()
-{
-    if(CLUA_iferror(&UIRun_clua))
-    {
-        DrawText(CLUA_geterror(&UIRun_clua),23,23,20,BLACK);
-    }
-    else
-        CLUA_callfunction(&UIRun_clua,"EGBA");
-}
 
-void UI_Runner_Free()
+bool Runner_Load(const char* sfile)
 {
-    CLUA_free(&UIRun_clua);
-}
-
-#include "Runner.h"
-void Runner_Load(const char* sfile)
-{
-    R_Atlas_Init();
+    Atlas_Init();
     UI_Runner();
-    UI_Runner_Load(sfile);
+    UIRun_isload=1;
+    return UI_Runner_Load(sfile);
 }
 void Runner_Init(int narg,char** sarg)
 {
-    R_Atlas_Init();
-    UI_Runner();
-
     if(narg==1)
     {
-        if(!TextIsEqual( GetFileNameWithoutExt(sarg[0]) ,EGBA_RUN_NAME))
-        {
-            int size = GetFileLength(sarg[0]);
-            FILE* fic = fopen(sarg[0],"rb");
-            struct segba_data sdata;
-            if(fic!=NULL)
-            {
-                fseek(fic,size-sizeof(struct segba_data),0);
-                fread(&sdata,sizeof(struct segba_data),1,fic);
-                fclose(fic);
-                UIRun_isdebug=0;
-                UI_Runner();
-                UI_Runner_LoadD(sdata);
-            }
-        }
+
     }
     if(narg==2)
     {
-        if(UI_Runner_Load(sarg[1]))
+        if(Runner_Load(sarg[1]))
         {
         // runner init
         }
@@ -483,7 +452,18 @@ void Runner_Init(int narg,char** sarg)
         }
     }
 }
-
+const char* Runner_GetExt()
+{
+    return UIRun_ext;
+}
+const char* Runner_GetName()
+{
+    return UIRun_name;
+}
+char Runner_IsDebug()
+{
+    return UIRun_isdebug;
+}
 char Runner_IsDown()
 {
     if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) return 1;
@@ -492,39 +472,21 @@ char Runner_IsDown()
 
 void Runner_Draw()
 {
-    ClearBackground(WHITE);
-    UI_Runner_Draw();
+    ClearBackground(UICONFIG_COL1());
+    if(CLUA_iferror(&UIRun_clua))
+    {
+        DrawText(CLUA_geterror(&UIRun_clua),23,23,20,BLACK);
+    }
+    else
+        CLUA_callfunction(&UIRun_clua,"EGBA");
 }
 
 void Runner_Free()
 {
-    UI_Runner_Free();
-    R_Atlas_Free();
+    if(UIRun_isload)
+    {
+        CLUA_free(&UIRun_clua);
+        Atlas_Free();
+    }
+
 }
-// //------------------ main -------------------
-// int main(int narg,char** sarg)
-// {
-//     // Initialization
-//     //--------------------------------------------------------------------------------------
-//    // float fraq = GetMonitorWidth(0)/GetMonitorHeight(0);
-//     const int screenWidth = (720*4)/3; //GetMonitorWidth(0);
-//     const int screenHeight = 720;//GetMonitorHeight(0);
-//     InitWindow(screenWidth, screenHeight, EGBA_TITLE);
-//     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
-//     SetWindowIcon(icon);
-//
-//     Runner_Init(narg,sarg);
-//
-//     while (!WindowShouldClose())    // Detect window close button or ESC key
-//     {
-//         if(IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER))
-//             break;
-//         BeginDrawing();
-//         ClearBackground(WHITE);
-//         Runner_Draw();
-//         EndDrawing();
-//     }
-//     Runner_Free();
-//     CloseWindow();        // Close window and OpenGL
-//     return 0;
-// }

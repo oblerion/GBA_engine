@@ -1,6 +1,43 @@
 #include "EGBA.h"
 #include "Editor.h"
 #include "Runner.h"
+#include <stdio.h>
+
+const char* GetEntryPoint()
+{
+    char str[50];
+    FilePathList files = LoadDirectoryFiles(".");
+    for(int i=0;i<files.count;i++)
+    {
+        if(TextIsEqual(GetFileExtension(files.paths[i]),".entry"))
+        {
+            strcpy(str,files.paths[i]);
+            break;
+        }
+    }
+    UnloadDirectoryFiles(files);
+    return TextFormat("%s",str);
+}
+char EntryPoint(char* isrun)
+{
+   const char* sentry = GetEntryPoint();
+    if(Runner_Load(
+        TextFormat("%s.lua",
+                    GetFileNameWithoutExt(sentry)))
+    )
+    {
+        *isrun=1;
+        return 1;
+    }
+    else if(Runner_Load(
+        TextFormat("%s.egba",
+                    GetFileNameWithoutExt(sentry))))
+    {
+        *isrun=1;
+        return 1;
+    }
+    return 0;
+}
 
 int main(int narg,char** sarg)
 {
@@ -13,11 +50,13 @@ int main(int narg,char** sarg)
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
 
     char isrun = 0;
-
-    if(!Editor_Init(narg,sarg))
+    if(!EntryPoint(&isrun))
     {
-        isrun=1;
-        Runner_Init(narg,sarg);
+        if(!Editor_Init(narg,sarg))
+        {
+            isrun=1;
+            Runner_Init(narg,sarg);
+        }
     }
 
     while (!WindowShouldClose())    // Detect window close button or ESC key
