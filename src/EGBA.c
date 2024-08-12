@@ -8,8 +8,9 @@ struct segba_atlas egba_atlas;
 
 struct sconfig
 {
-    Color color1;
-    Color color2;
+    // Color color1;
+    // Color color2;
+    int theme_nb;
 };
 
 struct suiconfig
@@ -19,7 +20,7 @@ struct suiconfig
     float timer;
 };
 
-struct suiconfig _UICONFIG;
+struct suiconfig _UICONFIG={0};
 
 char UICONFIG_Timer()
 {
@@ -32,14 +33,15 @@ char UICONFIG_Timer()
     _UICONFIG.timer -= GetFrameTime();
     return 0;
 }
-Color UICONFIG_COL1()
-{
-    return _UICONFIG.config.color1;
-}
-Color UICONFIG_COL2()
-{
-    return _UICONFIG.config.color2;
-}
+// Color UICONFIG_COL1()
+// {
+//     return _UICONFIG.config.color1;
+// }
+// Color UICONFIG_COL2()
+// {
+//     return _UICONFIG.config.color2;
+// }
+
 char UICONFIG_GetActive()
 {
     return _UICONFIG.isactive;
@@ -52,7 +54,15 @@ void UICONFIG_SetActive(char c)
         _UICONFIG.timer=0.001f;
     // }
 }
-
+int UICONFIG_GetTheme()
+{
+    return _UICONFIG.config.theme_nb;
+}
+void UICONFIG_SetTheme(int itheme)
+{
+    _UICONFIG.config.theme_nb=itheme;
+}
+/*
 void UICONFIG_SetYellowTheme()
 {
     _UICONFIG.config.color1=(Color){130,145,2};
@@ -86,7 +96,7 @@ void UICONFIG_SetBlackTheme()
 {
     _UICONFIG.config.color1=BLACK;
     _UICONFIG.config.color2=DARKGRAY;
-}
+}*/
 
 void UICONFIG_Save()
 {
@@ -224,7 +234,26 @@ void Data_Palette_LoadF(const char* pfile)
     if(TextIsEqual(GetFileExtension(pfile),".png"))
     {
         Image img = LoadImage(pfile);
-        if(img.width==256 && img.height==257)
+        if(img.width>=16 && img.width<33 && img.height==1)
+        {
+            Color* lcol = LoadImageColors(img);
+            for(int i=0;i<32;i++)
+            {
+                if(i<img.width)
+                {
+                    egba_data.palettes[egba_data.palette_nb].data[i]=lcol[i];
+                }
+                else
+                {
+                    egba_data.palettes[egba_data.palette_nb].data[i]=(Color){0,0,0,0};
+                }
+
+            }
+            UnloadImageColors(lcol);
+            egba_data.palette_nb+=1;
+            Atlas_UpdatePalette(egba_data.palettes);
+        }
+        else if(img.width==256 && img.height==257)
         {
             for(int i=0;i<EGBA_MAX_PALETTE;i++)
             for(int j=0;j<EGBA_MAX_COLOR_PALETTE;j++)
@@ -240,8 +269,8 @@ void Data_Palette_LoadF(const char* pfile)
         {
             struct Palette pal = {{0},{BLACK}};
             UICONFIG_Load();
-            pal.data[0]=UICONFIG_COL1();
-            pal.data[1]=UICONFIG_COL2();
+            pal.data[0]=WHITE;
+            pal.data[1]=BLACK;
             egba_data.palettes[0]=pal;
             egba_data.palette_nb=0;
             Atlas_UpdatePalette(egba_data.palettes);
@@ -359,8 +388,15 @@ struct Sprite Data_Sprite_Get(int id)
 
 void Data_Script_Init()
 {
+    strcpy(egba_data.script,"");
     egba_data.script[0]='\0';
 }
+
+const char* Data_Script_Get()
+{
+    return TextFormat("%s",egba_data.script);
+}
+
 void Data_Script_LoadF(const char* pfile)
 {
     FILE* fic = fopen(pfile,"r");
@@ -497,12 +533,21 @@ void Atlas_UpdateSprite(struct Sprite* sprites)
     UpdateTexture(egba_atlas.sprites,img.data);
     UnloadImage(img);
 }
-
+#include "raygui.h"
+Color _StyleGetColor(char idcol)
+{
+    int icol=0;
+    if(idcol==0)
+        icol = GuiGetStyle(0,1);
+    else if(idcol==1)
+        icol = GuiGetStyle(0,2);
+    return GetColor(icol);
+}
 void Atlas_DrawPalette(int id, int x, int y, int scale)
 {
     if(id>-1 && id<6)
     {
-        DrawRectangleLines(x-2,y-2,(32*scale)+4,scale+4,UICONFIG_COL2());
+        DrawRectangleLines(x-2,y-2,(32*scale)+4,scale+4,_StyleGetColor(1));
         DrawTexturePro(egba_atlas.palettes,(Rectangle){0,id,32,1},(Rectangle){x,y,32*scale,scale},(Vector2){0,0},0,WHITE);
     }
 

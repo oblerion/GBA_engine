@@ -6,7 +6,7 @@ LUAWIN="/home/desnot/GD/lua-5.4.2/lua_win"
 LUAWEB="/home/desnot/GD/lua-5.4.2/lua_web"
 CC=gcc
 CFLAGS="-g -Wall -L${LUALINUX}/lib -llua -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"
-INC="-I${LUALINUX}/include" 
+INC="-I${LUALINUX}/include -Isrc"
 EXEC="egba"
 DOBJ="build/linux64/"
 
@@ -62,17 +62,20 @@ function comp(){
 function link(){
 	command $TCC $TLINK $TCFLAGS "-o" $TEXEC; 
 	echo $TCC $TLINK $TCFLAGS "-o" $TEXEC; 
+	if [ "$TCC" == "gcc" ] && [ -f $TEXEC ] ;then
+		command ./$TEXEC;
+	fi;
 }
 
 if [ $# -eq 0 ];then 
 # default
 	rm -f $TEXEC;
-	init "$CC" "$INC" "$CFLAGS" "egba" "$DOBJ";
+	init "$CC" "$INC" "$CFLAGS" "$EXEC" "$DOBJ";
 	comp;
 	link;
 
 elif [ "$1" == "w" ];then
-	init "$CC2" "$INC2" "$CFLAGS2" "egba.exe" "$DOBJ2";
+	init "$CC2" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
 	comp;
 	link;
 elif [ "$1" == "web" ];then

@@ -472,7 +472,7 @@ char Runner_IsDown()
 
 void Runner_Draw()
 {
-    ClearBackground(UICONFIG_COL1());
+    ClearBackground(WHITE);//UICONFIG_COL1());
     if(CLUA_iferror(&UIRun_clua))
     {
         DrawText(CLUA_geterror(&UIRun_clua),23,23,20,BLACK);

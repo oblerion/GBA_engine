@@ -1,8 +1,8 @@
 #pragma once
 #include <string.h>
 #include "raylib.h"
-#define EGBA_VERSION "a1.7"
-#define EGBA_TITLE TextFormat("GBA engine ver %s by magnus oblerion",EGBA_VERSION)
+#define EGBA_VERSION "a1.7.2"
+#define EGBA_TITLE TextFormat("EGBA engine ver %s by magnus oblerion",EGBA_VERSION)
 
 #define EGBA_RUN_NAME "egba"
 #define EGBA_EDIT_NAME "egba"
@@ -18,17 +18,12 @@
 #define SAVING_MAX_NUMBER 50
 #define SAVING_MAX_STRING 50
 
+// TODO: edit UICONFIG -> raygui
 char UICONFIG_Timer();
-Color UICONFIG_COL1();
-Color UICONFIG_COL2();
 char UICONFIG_GetActive();
 void UICONFIG_SetActive(char c);
-void UICONFIG_SetYellowTheme();
-void UICONFIG_SetGreenTheme();
-void UICONFIG_SetRedTheme();
-void UICONFIG_SetBlueTheme();
-void UICONFIG_SetWhiteTheme();
-void UICONFIG_SetBlackTheme();
+void UICONFIG_SetTheme(int itheme);
+int UICONFIG_GetTheme();
 void UICONFIG_Save();
 void UICONFIG_Load();
 
@@ -90,6 +85,7 @@ void Data_Sprite_LoadF(const char *pfile);
 void Data_Sprite_LoadD(struct segba_data sdata);
 struct Sprite Data_Sprite_Get(int id);
 void Data_Script_Init();
+const char* Data_Script_Get();
 void Data_Script_LoadF(const char* pfile);
 void Data_Script_LoadD(struct segba_data sdata);
 void Data_Script_Draw(int x,int y,Color color);

@@ -4,6 +4,104 @@
 #include "EGBA.h"
 #include "../cimg.h"
 
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+#include "styles/style_jungle.h"            // raygui style: jungle
+#include "styles/style_candy.h"             // raygui style: candy
+#include "styles/style_lavanda.h"           // raygui style: lavanda
+#include "styles/style_cyber.h"             // raygui style: cyber
+#include "styles/style_terminal.h"          // raygui style: terminal
+#include "styles/style_ashes.h"             // raygui style: ashes
+#include "styles/style_bluish.h"            // raygui style: bluish
+#include "styles/style_dark.h"              // raygui style: dark
+#include "styles/style_cherry.h"            // raygui style: cherry
+#include "styles/style_sunny.h"             // raygui style: sunny
+#include "styles/style_enefete.h"           // raygui style: enefete
+
+// TODO: bug update project after build egba
+// TODO: update itchio page
+
+void StyleLoader(int pid)
+{
+    switch (pid)
+    {
+        case 1: GuiLoadStyleJungle(); break;
+        case 2: GuiLoadStyleCandy(); break;
+        case 3: GuiLoadStyleLavanda(); break;
+        case 4: GuiLoadStyleCyber(); break;
+        case 5: GuiLoadStyleTerminal(); break;
+        case 6: GuiLoadStyleAshes(); break;
+        case 7: GuiLoadStyleBluish(); break;
+        case 8: GuiLoadStyleDark(); break;
+        case 9: GuiLoadStyleCherry(); break;
+        case 10: GuiLoadStyleSunny(); break;
+        case 11: GuiLoadStyleEnefete(); break;
+        default: GuiLoadStyleDefault();break;
+    }
+}
+Color StyleGetColor(char idcol)
+{
+    int icol=0;
+    if(idcol==0)
+        icol = GuiGetStyle(0,1);
+    else if(idcol==1)
+        icol = GuiGetStyle(0,2);
+    return GetColor(icol);
+}
+#define GUI_UIBROWSER_IMPLEMENTATION
+#include "gui/gui_UIBrowser.h"
+#define GUI_UIPROJECT_IMPLEMENTATION
+#include "gui/gui_UIProject.h"
+#define GUI_UIPROJECT_LOCK_IMPLEMENTATION
+#include "gui/gui_UIProject_lock.h"
+#define GUI_UIPROJECT_NOEGBA_IMPLEMENTATION
+#include "gui/gui_UIProject_noEGBA.h"
+#define GUI_UIPROJECT_NOD_IMPLEMENTATION
+#include "gui/gui_UIProject_noD.h"
+#define GUI_UIPROJECT_NODL_IMPLEMENTATION
+#include "gui/gui_UIProject_noDL.h"
+#define GUI_UIHELP_IMPLEMENTATION
+#include "gui/gui_UIHelp.h"
+#define GUI_UICONFIG_IMPLEMENTATION
+#include "gui/gui_UIConfig.h"
+#define GUI_UISCRIPT_IMPLEMENTATION
+#include "gui/gui_UIScript.h"
+#define GUI_UISPRITE_IMPLEMENTATION
+#include "gui/gui_UISprite.h"
+
+GuiUIBrowserState state_uibrowser;
+GuiUIProjectState state_uiproject;
+GuiUIProjectLockState state_uiprojectlock;
+GuiUIProjectNoEGBAState state_uiprojectnoegba;
+GuiUIProjectNoDState state_uiprojectnod;
+GuiUIProjectNoDLState state_uiprojectnodl;
+GuiUIHelpState state_uihelp;
+GuiUIConfigState state_uiconfig;
+GuiUIScriptState state_uiscript;
+GuiUISpriteState state_uisprite;
+
+const char* UIScript_GetTextList()
+{
+    const char* cstr = Data_Script_Get();
+    char lstr[EGBA_MAX_SCRIPTSIZE];
+
+    for(int i=0;i<strlen(cstr);i++)
+    {
+        if(cstr[i]=='\n')
+        {
+            lstr[i]=';';
+        }
+        if(cstr[i]=='\t')
+        {
+            lstr[i]=0;
+        }
+        else
+        {
+            lstr[i]=cstr[i];
+        }
+    }
+    return TextFormat("%s",lstr);
+}
 
 // ---------------------- ext lib
 #define _MATH_collide(x,y,w,h,x2,y2,w2,h2) (x+w>x2 && x<x2+w2 && y+h>y2 && y2+h2>y)
@@ -111,10 +209,10 @@ int UI_Palette_Draw(int px,int py,int pscale)
         for(int j=0;j<nbpalette;j++)
         {
 			Atlas_DrawPalette(j,px+23,py+yborder+23+(j*45),pscale);
-			DrawText(Data_Palette_GetName(j),px+5,py+yborder+(j*45)+5,10,UICONFIG_COL2());
+			DrawText(Data_Palette_GetName(j),px+5,py+yborder+(j*45)+5,10,StyleGetColor(1));
 			if(CheckCollisionPointRec(GetMousePosition(), (Rectangle){px+23,py+(float)yborder+23+(j*45),32*pscale,pscale}))
 			{
-				if(UIBUTTON((pscale-1)*32,py+yborder+21+(j*45)+2,"delete",pscale+4,UICONFIG_COL2()))
+				if(UIBUTTON((pscale-1)*32,py+yborder+21+(j*45)+2,"delete",pscale+4,StyleGetColor(1)))
 				{
 				   Data_Palette_DelPal(j);
 				}
@@ -123,7 +221,7 @@ int UI_Palette_Draw(int px,int py,int pscale)
     }
     else
     {
-        DrawText("Drop palette image file here",px+23,py+100,pscale+5,UICONFIG_COL2());
+        DrawText("Drop palette image file here",px+23,py+100,pscale+5,StyleGetColor(1));
     }
     return ret;
 }
@@ -174,8 +272,8 @@ Texture2D UISprite_sprfond;
 
 void UI_Sprite_GenSprFont()
 {
-    Image itrangle = GenTriangle(26,UICONFIG_COL2());
-    Image img = GenImageColor(26*16,26*16,UICONFIG_COL1());
+    Image itrangle = GenTriangle(26,StyleGetColor(1));
+    Image img = GenImageColor(26*16,26*16,StyleGetColor(0));
     for(int i=0;i<16;i++)
     for(int j=0;j<16;j++)
     {
@@ -206,7 +304,7 @@ void UI_Sprite_Init()
         (size*y)+x);
     }
        // fond spr
-    UISprite_sprfond = LoadTextureFromImage(GenImageColor(26*16,26*16,UICONFIG_COL1()));
+    UISprite_sprfond = LoadTextureFromImage(GenImageColor(26*16,26*16,BLACK));
     UI_Sprite_GenSprFont();
 }
 
@@ -215,7 +313,7 @@ int UI_Sprite_Draw()
 {
     int ret=0;
     DrawTexture(UISprite_sprfond,2,30,WHITE);
-    DrawRectangleLines(440,30,16*2*16,16*2*16,UICONFIG_COL2());
+    DrawRectangleLines(440,30,16*2*16,16*2*16,StyleGetColor(1));
     for(int y=0;y<16;y++)
     for(int x=0;x<16;x++)
     {
@@ -243,65 +341,47 @@ void UI_Sprite_Free()
 //     strcpy(sdata->script,UI_Script.script);
 // }
 
-void UI_Script_Draw()
-{
-    Data_Script_Draw(15,30,UICONFIG_COL2());
-}
+// void UI_Script_Draw()
+// {
+//     Data_Script_Draw(15,30,BLACK);
+// }
 
+int prevVisualStyleActive;
 void UICONFIG_Init()
 {
-    UICONFIG_SetWhiteTheme();
+    //UICONFIG_SetWhiteTheme();
+    prevVisualStyleActive=0;
+    state_uiconfig = InitGuiUIConfig();
     UICONFIG_Load();
+    state_uiconfig.ComboBox001Active= UICONFIG_GetTheme();
+    StyleLoader(state_uiconfig.ComboBox001Active);
 }
 
-void UICONFIG_Draw(int x,int y)
+
+// Load default style
+char UICONFIG_Draw()
 {
     if(UICONFIG_Timer())
     {
-		DrawText("Setting",23,5,25,UICONFIG_COL2());
-		DrawRectangleLines(4,31,951,682,UICONFIG_COL2());
-        DrawText("theme :",x+3,y+35,20,UICONFIG_COL2());
-        if(UIBUTTON(x+78,y+35,"white",20,WHITE))
+        GuiUIConfig(&state_uiconfig);
+        if(state_uiconfig.WindowBox000Active==false)
         {
-            UICONFIG_SetWhiteTheme();
+            UICONFIG_SetTheme(state_uiconfig.ComboBox001Active);
             UICONFIG_Save();
-            UI_Sprite_GenSprFont();
+            state_uiconfig.WindowBox000Active=true;
+            UICONFIG_SetActive(0);
+            return 1;
         }
-        if(UIBUTTON(x+148,y+35,"black",20,DARKGRAY))
+        if (state_uiconfig.ComboBox001Active != prevVisualStyleActive)
         {
-            UICONFIG_SetBlackTheme();
-            UICONFIG_Save();
-            UI_Sprite_GenSprFont();
-        }
-
-        if(UIBUTTON(x+218,y+35,"blue",20,BLUE))
-        {
-            UICONFIG_SetBlueTheme();
-            UICONFIG_Save();
-            UI_Sprite_GenSprFont();
-        }
-
-        if(UIBUTTON(x+278,y+35,"red",20,RED))
-        {
-            UICONFIG_SetRedTheme();
-            UICONFIG_Save();
-            UI_Sprite_GenSprFont();
-        }
-
-        if(UIBUTTON(x+328,y+35,"green",20,GREEN))
-        {
-            UICONFIG_SetGreenTheme();
-            UICONFIG_Save();
-            UI_Sprite_GenSprFont();
-        }
-
-        if(UIBUTTON(x+408,y+35,"yellow",20,YELLOW))
-        {
-            UICONFIG_SetYellowTheme();
-            UICONFIG_Save();
+            // Reset to default internal style
+            // NOTE: Required to unload any previously loaded font texture
+            StyleLoader(state_uiconfig.ComboBox001Active);
+            prevVisualStyleActive = state_uiconfig.ComboBox001Active;
             UI_Sprite_GenSprFont();
         }
     }
+    return 0;
 }
 
 struct sproject
@@ -445,6 +525,7 @@ Project PROJECT_Init(const char* pname)
 struct sbrowser
 {
 	Project list[EGBA_MAX_PROJECT];
+    char listname_draw[EGBA_MAX_PROJECT*50];
 	int project_nb;
 	float timer;
 
@@ -484,12 +565,14 @@ void BROWSER_LoadProject(const char* name)
 	if(BROWSER_IfProjectExist(name))
 	{
 		_BROWSER.list[_BROWSER.project_nb] = PROJECT_Init(name);
-		++_BROWSER.project_nb;
-	}
+        ++_BROWSER.project_nb;
+    }
 }
 void BROWSER_Scan()
 {
 	_BROWSER.project_nb=0;
+    strcpy(_BROWSER.listname_draw,"");
+
 	FilePathList files = LoadDirectoryFiles(".");
 	for(int i=0;i<files.count;i++)
 	{
@@ -500,6 +583,15 @@ void BROWSER_Scan()
 				BROWSER_LoadProject(file_noext);
 		}
 	}
+	// update lst name draw
+    for(int i=0;i<_BROWSER.project_nb;i++)
+    {
+        if(i==0)
+            strcat(_BROWSER.listname_draw,_BROWSER.list[i].name);
+        else
+            strcat(_BROWSER.listname_draw,TextFormat(";%s",_BROWSER.list[i].name));
+    }
+
 	UnloadDirectoryFiles(files);
 }
 void BROWSER_CreateProject(const char* name)
@@ -515,13 +607,14 @@ void BROWSER_CreateProject(const char* name)
 			strcpy(tmp_name,TextFormat("%s%d",name,tmp_i));
 		}
 
-		Image img = GenImageColor(256,256,BLACK);
+		Image img = GenImageColor(256,256,(Color){0,0,0,0});
+        // ImageDrawPixel(&img,1,256,UICONFIG_COL2());
 		ExportImage(img,TextFormat("%s.png",tmp_name));
 		UnloadImage(img);
 
         FILE* fic = fopen(TextFormat("%s.lua",tmp_name),"w");
         fprintf(fic,
-        "function EGBA()\n-- code run 60/seconds\ncls(0)\ntext(%chello world%c,100,50,1,20)\nend",'"','"');
+        "function EGBA()%c-- code run 60/seconds%ccls(0)%ctext(%chello world%c,100,50,1,20)%cend",'\n','\n','\n','"','"','\n');
         fclose(fic);
 		BROWSER_Scan();
 	}
@@ -548,6 +641,7 @@ void BROWSER_DelProject(const char* name)
 			if(_BROWSER.list[i].isegba)
 				system(TextFormat("%s %s",CMD_RM,
 				PROJECT_GetFileEgba(_BROWSER.list[i])));
+            strcpy(_BROWSER.list[i].name,"");
 			BROWSER_Scan();
 			break;
 		}
@@ -556,6 +650,7 @@ void BROWSER_DelProject(const char* name)
 
 void BROWSER_Init()
 {
+    state_uibrowser = InitGuiUIBrowser();
 	BROWSER_Scan();
 }
 
@@ -563,59 +658,66 @@ void BROWSER_Init()
 int BROWSER_Draw()
 {
 	int ri=-1;
-    int offsety = 40;
-	DrawText("Project browser",23,5,25,UICONFIG_COL2());
-    DrawRectangleLines(5,33,950,680,UICONFIG_COL2());
-    for(int i=0;i<_BROWSER.project_nb;i++)
-    {
-		if(UIBUTTON(
-		((i/BROWSER_PROJECT_MAX_H)*200)+23+16,
-		offsety+((i%BROWSER_PROJECT_MAX_H)*28),
-		_BROWSER.list[i].name,
-		18,UICONFIG_COL2())
-		)
-		{
-			ri=i;
-		}
-		//del button
-		if(UIBUTTON(
-		((i/BROWSER_PROJECT_MAX_H)*200)+13,
-		offsety+((i%BROWSER_PROJECT_MAX_H)*28),
-		"-",
-		20,UICONFIG_COL2())
-		)
-		{
-			if(_BROWSER.timer==0)
-			{
-				BROWSER_DelProject(_BROWSER.list[i].name);
-				_BROWSER.timer=0.001f;
-			}
-		}
+    GuiUIBrowser(&state_uibrowser,_BROWSER.listname_draw);
+    ri = (state_uibrowser.ListViewNameScrollIndex*19)+state_uibrowser.ListViewNameActive;
 
-	}
-	// add button
-	if(_BROWSER.project_nb<EGBA_MAX_PROJECT)
-	{
-		if(UIBUTTON(
-			(((_BROWSER.project_nb)/BROWSER_PROJECT_MAX_H)*200)+13,
-			offsety+(((_BROWSER.project_nb)%BROWSER_PROJECT_MAX_H)*28),
-			"+",
-			20,UICONFIG_COL2()))
-		{
-			if(_BROWSER.timer==0)
-			{
-				BROWSER_CreateProject("new");
-				_BROWSER.timer=0.001f;
-			}
-		}
-	}
+    if(state_uibrowser.ButtonDocPressed)
+    {
+        OpenURL("./egba_manual_a1.7.pdf");//"https://oblerion.itch.io/gba-engine");
+    }
+        //
+    if(!UICONFIG_GetActive())
+    {
+        if(state_uibrowser.ButtonConfigPressed)
+        {
+            UICONFIG_SetActive(1);
+        }
+    }
+    if(state_uibrowser.ButtonOpenDirPressed)
+    {
+#if defined(__linux)
+// #define _ifbinexist(name) (TextFormat("which %s 2>/dev/null && %s . && echo use %s >&2",name,name,name))
+#define _ifbinexist(name) (TextFormat("command -v %s && %s . && echo use %s",name,name,name))
+        system(_ifbinexist("nautilus"));
+        system(_ifbinexist("nemo"));
+        system(_ifbinexist("gnome-open"));
+#elif defined(_WIN32)
+        system(TextFormat("start %windir%\\%s %c.%c",
+                          "explorer.exe",'"','"'));
+#endif
+    }
+
+
+    if(ri<EGBA_MAX_PROJECT && ri<_BROWSER.project_nb)
+    {
+        if(state_uibrowser.ButtonLoadPressed)
+        {
+            return ri;
+        }
+        if(state_uibrowser.ButtonDeletePressed)
+        {
+            if(_BROWSER.timer==0)
+            {
+                BROWSER_DelProject(_BROWSER.list[ri].name);
+                _BROWSER.timer=0.001f;
+            }
+        }
+    }
+    if(state_uibrowser.ButtonNewPressed)
+    {
+        if(_BROWSER.timer==0)
+        {
+            BROWSER_CreateProject("new");
+            _BROWSER.timer=0.001f;
+        }
+    }
 
 	if(_BROWSER.timer>0)
 		_BROWSER.timer-=GetFrameTime();
 	else if(_BROWSER.timer<0)
 		_BROWSER.timer=0;
 
-	return ri;
+	return -1;
 }
 
 //-------- ui project -----------
@@ -623,6 +725,7 @@ int BROWSER_Draw()
 enum UIPROJECT_STATE
 {
 	UIPROJECT_STATE_DEFAULT=0,
+    UIPROJECT_STATE_HELP,
 	UIPROJECT_STATE_VSPRITE,
 	UIPROJECT_STATE_VSCRIPT,
 	UIPROJECT_STATE_VRUNNER
@@ -665,6 +768,22 @@ void UIPROJECT_Init(int idproject)
 	if(pjt.isegba)
 		_UIPROJECT.islock = PROJECT_LoadEgba(pjt);
 
+    state_uiproject = InitGuiUIProject();
+    strcpy(state_uiproject.TextBoxNameText,pjt.name);
+    state_uiprojectlock = InitGuiUIProjectLock();
+    strcpy(state_uiprojectlock.LabelTextName,pjt.name);
+    state_uiprojectnoegba = InitGuiUIProjectNoEGBA();
+    strcpy(state_uiprojectnoegba.TextBoxNameText,pjt.name);
+    state_uiprojectnod = InitGuiUIProjectNoD();
+    strcpy(state_uiprojectnod.TextBoxNameText,pjt.name);
+    state_uiprojectnodl = InitGuiUIProjectNoDL();
+    strcpy(state_uiprojectnodl.LabelTextName,pjt.name);
+    state_uihelp = InitGuiUIHelp();
+    state_uiscript = InitGuiUIScript();
+    state_uiscript.ListText[0]='\0';
+    strcpy(state_uiscript.ListText,UIScript_GetTextList());
+    state_uisprite = InitGuiUISprite();
+
 }
 void UIPROJECT_Update()
 {
@@ -672,16 +791,195 @@ void UIPROJECT_Update()
     UIPROJECT_Init(_UIPROJECT.id);
 }
 
-void UIPROJECT_DrawInfo()
+// void UIPROJECT_DrawInfo()
+// {
+//     // DrawText("[space] for start/end debug script",10,300,20,UICONFIG_COL2());
+//     // DrawText("[enter] for start/end run egba",10,330,20,UICONFIG_COL2());
+//     // DrawText("[ctrl]+[i] import sprite/script from egba",10,360,20,UICONFIG_COL2());
+//     // DrawText("[ctrl]+[e] export sprite/script to egba",10,390,20,UICONFIG_COL2());
+//     // DrawText("[ctrl]+[l] export sprite/script to lock egba",10,420,20,UICONFIG_COL2());
+//
+//     // DrawText("[ctrl]+[b] create binairy from egba",10,450,20,UICONFIG_COL2());
+// }
+void _UIPROJECT_StatelockEGBA(Project lproject)
 {
-    DrawText("[space] for start/end debug script",10,300,20,UICONFIG_COL2());
-    DrawText("[enter] for start/end run egba",10,330,20,UICONFIG_COL2());
-    DrawText("[ctrl]+[i] import sprite/script from egba",10,360,20,UICONFIG_COL2());
-    DrawText("[ctrl]+[e] export sprite/script to egba",10,390,20,UICONFIG_COL2());
-    DrawText("[ctrl]+[l] export sprite/script to lock egba",10,420,20,UICONFIG_COL2());
-    // DrawText("[ctrl]+[b] create binairy from egba",10,450,20,UICONFIG_COL2());
+    GuiUIProjectLock(&state_uiprojectlock);
+    if(!state_uiprojectlock.WindowBox000Active)
+    {
+        _UIPROJECT.isactive=0;
+        state_uiprojectlock.WindowBox000Active=true;
+
+    }
+    if(state_uiprojectlock.ButtonLoadPressed)
+    {
+        puts("[EGBA] : sprite/script -> egba ...");
+        PROJECT_BuildEgba(lproject,0);
+        puts("[EGBA] : done");
+        _UIPROJECT.islock=0;
+        UIPROJECT_Update();
+    }
+    if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_L))
+    {
+        puts("[EGBA] : sprite/script -> lock egba ...");
+        PROJECT_BuildEgba(lproject,1);
+        puts("[EGBA] : done");
+        _UIPROJECT.islock=1;
+        UIPROJECT_Update();
+    }
+    if(state_uiprojectlock.ButtonRunPressed)
+    {
+        puts("[EGBA][RUNNER START]");
+        if(PROJECT_RunInit(lproject))
+        {
+            _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
+        }
+        else
+            printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileEgba(lproject));
+    }
+}
+void _UIPROJECT_StateEGBA(Project lproject)
+{
+    // default egba
+    GuiUIProject(&state_uiproject);
+    if(!state_uiproject.WindowBox000Active)
+    {
+        _UIPROJECT.isactive=0;
+        state_uiproject.WindowBox000Active=true;
+
+    }
+    if(state_uiproject.ButtonLoadPressed)
+    {
+        puts("[EGBA] : sprite/script -> egba ...");
+        PROJECT_BuildEgba(lproject,0);
+        puts("[EGBA] : done");
+        _UIPROJECT.islock=0;
+        UIPROJECT_Update();
+    }
+    if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_L))
+    {
+        puts("[EGBA] : sprite/script -> lock egba ...");
+        PROJECT_BuildEgba(lproject,1);
+        puts("[EGBA] : done");
+        _UIPROJECT.islock=1;
+        UIPROJECT_Update();
+    }
+    if(state_uiproject.ButtonImportPressed ||
+    (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_I)))
+    {
+        puts("[EGBA] : import script/sprite ...");
+        PROJECT_ExportScript(lproject);
+        PROJECT_ExportSprite(lproject);
+        UIPROJECT_Update();
+        puts("[EGBA] : done");
+
+    }
+
+    if(state_uiproject.ButtonRunPressed ||
+        IsKeyPressed(KEY_ENTER)
+    )
+    {
+        puts("[EGBA][RUNNER START]");
+        if(PROJECT_RunInit(lproject))
+        {
+            _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
+        }
+        else
+            printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileEgba(lproject));
+    }
+
 }
 
+void _UIPROJECT_StatenoEGBA(Project lproject)
+{
+    GuiUIProjectNoEGBA(&state_uiprojectnoegba);
+    if(!state_uiprojectnoegba.WindowBox000Active)
+    {
+        _UIPROJECT.isactive=0;
+        state_uiprojectnoegba.WindowBox000Active=true;
+
+    }
+    if(state_uiprojectnoegba.ButtonLoadPressed)
+    {
+        puts("[EGBA] : sprite/script -> egba ...");
+        PROJECT_BuildEgba(lproject,0);
+        puts("[EGBA] : done");
+        _UIPROJECT.islock=0;
+        UIPROJECT_Update();
+    }
+    if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_L))
+    {
+        puts("[EGBA] : sprite/script -> lock egba ...");
+        PROJECT_BuildEgba(lproject,1);
+        puts("[EGBA] : done");
+        _UIPROJECT.islock=1;
+        UIPROJECT_Update();
+    }
+}
+
+void _UIPROJECT_StateDebug(Project lproject)
+{
+    //debug
+    if(IsKeyPressed(KEY_SPACE) ||
+        (state_uiproject.ButtonDebugPressed ||
+        state_uiprojectlock.ButtonDebugPressed ||
+        state_uiprojectnoegba.ButtonDebugPressed)
+    )
+    {
+        puts("[EGBA][DEBUG INIT]");
+        if(PROJECT_DebugInit(lproject))
+        {
+            _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
+        }
+        else
+            printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileLua(lproject));
+    }
+    // lua , spr viewer
+    if( state_uiproject.ButtonLuaPressed ||
+        state_uiprojectlock.ButtonLuaPressed ||
+        state_uiprojectnoegba.ButtonLuaPressed)
+    {
+        _UIPROJECT.state=UIPROJECT_STATE_VSCRIPT;
+        PROJECT_LoadScript(lproject);
+    }
+    if( state_uiproject.ButtonSpritePressed ||
+        state_uiprojectlock.ButtonSpritePressed ||
+        state_uiprojectnoegba.ButtonSpritePressed)
+    {
+        _UIPROJECT.state=UIPROJECT_STATE_VSPRITE;
+        PROJECT_LoadSprite(lproject);
+    }
+}
+
+void _UIPROJECT_StateNoD(Project lproject)
+{
+    GuiUIProjectNoD(&state_uiprojectnod);
+    if(!state_uiprojectnod.WindowBox000Active)
+    {
+        _UIPROJECT.isactive=0;
+        state_uiprojectnod.WindowBox000Active=true;
+
+    }
+    if(state_uiprojectnod.ButtonImportPressed ||
+    (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_I)))
+    {
+        puts("[EGBA] : import script/sprite ...");
+        PROJECT_ExportScript(lproject);
+        PROJECT_ExportSprite(lproject);
+        UIPROJECT_Update();
+        puts("[EGBA] : done");
+
+    }
+}
+void _UIPROJECT_StateNoDL(Project lproject)
+{
+    GuiUIProjectNoDL(&state_uiprojectnodl);
+    if(!state_uiprojectnodl.WindowBox000Active)
+    {
+        _UIPROJECT.isactive=0;
+        state_uiprojectnodl.WindowBox000Active=true;
+
+    }
+}
 void UIPROJECT_Draw()
 {
     if(_UIPROJECT.timer>0)
@@ -695,119 +993,86 @@ void UIPROJECT_Draw()
 		switch(_UIPROJECT.state)
 		{
 			case UIPROJECT_STATE_DEFAULT:
-                DrawRectangleLines(5,33,950,680,UICONFIG_COL2());
-                DrawText(TextFormat("Project : %s",lproject.name),90,5,25,UICONFIG_COL2());
-                UIPROJECT_DrawInfo();
-
-                DrawRectangleLines(45,50,110,180,UICONFIG_COL2());
-				if(UIBUTTON(5,5,"back",20,UICONFIG_COL2()))
-				{
-                    BROWSER_Scan();
-					_UIPROJECT.isactive=0;
-				}
-				if(lproject.islua)
-				{
-                    if(UIBUTTONIMG(60,70,_UIPROJECT.lua))
-					{
-						_UIPROJECT.state=UIPROJECT_STATE_VSCRIPT;
-                        PROJECT_LoadScript(lproject);
-					}
-				}
-				if(lproject.ispng)
-				{
-                    if(UIBUTTONIMG(60,140,_UIPROJECT.spr))
-					{
-						_UIPROJECT.state=UIPROJECT_STATE_VSPRITE;
-                        PROJECT_LoadSprite(lproject);
-					}
-				}
-
-				if(lproject.islua && lproject.ispng)
-				{
-					if(IsKeyPressed(KEY_SPACE))
-					{
-                        puts("[EGBA][DEBUG INIT]");
-						if(PROJECT_DebugInit(lproject))
-                        {
-                           _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
-                        }
-                        else
-                            printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileLua(lproject));
-					}
-
-					if(UIBUTTON(170,90," -> ",20,UICONFIG_COL2()) ||
-                        (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E))
-                    )
-					{
-                        puts("[EGBA] : sprite/script -> egba ...");
-                        PROJECT_BuildEgba(lproject,0);
-                        puts("[EGBA] : done");
-                        UIPROJECT_Update();
-					}
-
-					if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_L))
+                if(state_uiproject.ButtonHelpPressed ||
+                    state_uiprojectlock.ButtonHelpPressed ||
+                    state_uiprojectnoegba.ButtonHelpPressed ||
+                    state_uiprojectnod.ButtonHelpPressed ||
+                    state_uiprojectnodl.ButtonHelpPressed)
+                {
+                    _UIPROJECT.state=UIPROJECT_STATE_HELP;
+                }
+                if(lproject.islua && lproject.ispng)
+                {
+                    if(lproject.isegba)
                     {
-                        puts("[EGBA] : sprite/script -> lock egba ...");
-						PROJECT_BuildEgba(lproject,1);
-                        puts("[EGBA] : done");
-                        UIPROJECT_Update();
-                    }
-				}
-
-				DrawRectangleLines(220,50,110,180,UICONFIG_COL2());
-				if(lproject.isegba)
-				{
-                    if(UIBUTTONIMG(225,75,_UIPROJECT.egba))
-					{
-
-					}
-					if(IsKeyPressed(KEY_ENTER))
-					{
-                        puts("[EGBA][RUNNER START]");
-						if(PROJECT_RunInit(lproject))
-                        {
-                            _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
-                        }
+                        if(!_UIPROJECT.islock)
+                            _UIPROJECT_StateEGBA(lproject);
                         else
-                            printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileEgba(lproject));
-					}
-
-					// if(UIBUTTON(350,90,"export bin",20,UICONFIG_COL2()) ||
-     //                    (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_B))
-     //                )
-     //                {
-     //                    puts("[EGBA] : export bin ...");
-     //                    PROJECT_BuildExec(lproject);
-     //                    puts("[EGBA] : done");
-     //                }
-
-                    if(_UIPROJECT.islock==0)
-                    {
-                        if(UIBUTTON(170,150," <- ",20,UICONFIG_COL2()) ||
-                            (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_I)))
-                        {
-                            puts("[EGBA] : import script/sprite ...");
-                            PROJECT_ExportScript(lproject);
-                            PROJECT_ExportSprite(lproject);
-                            UIPROJECT_Update();
-                            puts("[EGBA] : done");
-
-                        }
+                            _UIPROJECT_StatelockEGBA(lproject);
                     }
                     else
-                        DrawText("lock",165,150,20,UICONFIG_COL2());
+                    {
+                        _UIPROJECT_StatenoEGBA(lproject);
+                    }
+                    _UIPROJECT_StateDebug(lproject);
+                }
+                else
+                {
+                    if(lproject.isegba)
+                    {
+                        if(!_UIPROJECT.islock)
+                        {
+                            _UIPROJECT_StateNoD(lproject);
+                        }
+                        else
+                        {
+                            _UIPROJECT_StateNoDL(lproject);
+                        }
+                        if(state_uiprojectnod.ButtonRunPressed ||
+                            state_uiprojectnodl.ButtonRunPressed ||
+                            IsKeyPressed(KEY_ENTER)
+                        )
+                        {
+                            puts("[EGBA][RUNNER START]");
+                            if(PROJECT_RunInit(lproject))
+                            {
+                                _UIPROJECT.state=UIPROJECT_STATE_VRUNNER;
+                            }
+                            else
+                                printf("\n[EGBA] : error %s not found\n",PROJECT_GetFileEgba(lproject));
+                        }
+                    }
+                }
 
-				}
+				// 	// if(UIBUTTON(350,90,"export bin",20,UICONFIG_COL2()) ||
+    //  //                    (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_B))
+    //  //                )
+    //  //                {
+    //  //                    puts("[EGBA] : export bin ...");
+    //  //                    PROJECT_BuildExec(lproject);
+    //  //                    puts("[EGBA] : done");
+    //  //                }
 
 			break;
+            case UIPROJECT_STATE_HELP:
+                GuiUIHelp(&state_uihelp);
+                if(!state_uihelp.WindowBox000Active)
+                {
+                    _UIPROJECT.state = UIPROJECT_STATE_DEFAULT;
+                    state_uihelp.WindowBox000Active=true;
+                }
+            break;
 			case UIPROJECT_STATE_VSPRITE:
-				if(UIBUTTON(5,5,"back",20,UICONFIG_COL2()))
-				{
-					_UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
-				}
-				if(((IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL)) &&
+                GuiUISprite(&state_uisprite);
+                if(state_uisprite.WindowBox000Active==false)
+                {
+                    _UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
+                    state_uisprite.WindowBox000Active=true;
+                }
+                if((IsKeyDown(KEY_LEFT_CONTROL) &&
                     IsKeyPressed(KEY_S)) ||
-                    UIBUTTON(70,5,"save",20,UICONFIG_COL2()))
+                    state_uisprite.ButtonSavePressed)
+
                 {
                     puts("[EGBA] : saving sprite ...");
                     PROJECT_ExportSprite(lproject);
@@ -829,11 +1094,17 @@ void UIPROJECT_Draw()
 				UI_Palette_Draw(0,430,12);
 			break;
 			case UIPROJECT_STATE_VSCRIPT:
-				if(UIBUTTON(5,5,"back",20,UICONFIG_COL2()))
-				{
-					_UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
-				}
-				UI_Script_Draw();
+				// if(UIBUTTON(5,5,"back",20,BLACK))
+				// {
+				// 	_UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
+				// }
+				// UI_Script_Draw();
+                GuiUIScript(&state_uiscript);
+                if(!state_uiscript.WindowBox000Active)
+                {
+                   _UIPROJECT.state=UIPROJECT_STATE_DEFAULT;
+                   state_uiscript.WindowBox000Active=true;
+                }
 			break;
 			case UIPROJECT_STATE_VRUNNER:
                 if(Runner_IsDown())
@@ -885,36 +1156,22 @@ char Editor_Init(int narg,char** sarg)
 
 void Editor_Draw()
 {
-    ClearBackground(UICONFIG_COL1());
+    ClearBackground(WHITE);//UICONFIG_COL1());
     int browser_state=-1;
+
+    UICONFIG_Draw();
     if(_UIPROJECT.isactive==0)
     {
-
-        if(UIBUTTON(900,5,"doc",20,UICONFIG_COL2()))
-        {
-            OpenURL("https://oblerion.itch.io/gba-engine");
-        }
-
         if(!UICONFIG_GetActive())
         {
-            if(UIBUTTON(800,5,"setting",20,UICONFIG_COL2()))
-            {
-                UICONFIG_SetActive(1);
-            }
             browser_state = BROWSER_Draw();
             if(browser_state>-1)
             {
                 UIPROJECT_Init(browser_state);
             }
         }
-        else if(UIBUTTON(800,5,"browser",20,UICONFIG_COL2()))
-        {
-            //_UICONFIG.isactive = 0;
-            UICONFIG_SetActive(0);
-        }
-        UICONFIG_Draw(5,5);
     }
-    UIPROJECT_Draw();
+    else UIPROJECT_Draw();
 }
 
 void Editor_Free()

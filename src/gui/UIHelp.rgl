@@ -1,0 +1,18 @@
+#
+# rgl layout text file (v4.0) - raygui layout file generated using rGuiLayout
+#
+# Number of controls:     7
+#
+# Ref. window:    r <x> <y> <width> <height>
+# Anchor info:    a <id> <name> <posx> <posy> <enabled>
+# Control info:   c <id> <type> <name> <rectangle> <anchor_id> <text>
+#
+r 0 40 -1 -1
+a 001 anchor01 0 0 1
+c 000 0 WindowBox000 0 0 960 720 1 UI Help
+c 001 1 GroupBox002 32 56 896 136 1 shortcut
+c 002 4 Label001 40 64 832 24 1 [space] for start/end debug script
+c 003 4 Label003 40 88 832 24 1 [enter] for start/end run egba
+c 004 4 Label004 40 112 832 24 1 [ctrl] + [i] import sprite/script from EGBA
+c 005 4 Label005 40 136 832 24 1 [ctrl] + [e] export sprite/script to EGBA
+c 006 4 Label006 40 160 832 24 1 [ctrl] + [l] export sprite/script to lock EGBA

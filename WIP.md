@@ -22,7 +22,11 @@
 - [x] btn id 4 5 -> x c
 - [x] lua api rename print -> text
 ## lua/egba save-load static data
-- [ ] data to egba
-- [ ] .sav file for lua
-- [ ] function get data
-- [ ] function set data
+- [x] .sav file for lua
+- [x] function get data
+- [x] function set data
+## interverse
+- [x] launch script/egba lua
+- [x] entry point
+- [x] read extern save
+- [ ] rename project
