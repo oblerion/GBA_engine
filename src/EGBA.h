@@ -1,7 +1,7 @@
 #pragma once
 #include <string.h>
 #include "raylib.h"
-#define EGBA_VERSION "a1.7.2"
+#define EGBA_VERSION "a1.8"
 #define EGBA_TITLE TextFormat("EGBA engine ver %s by magnus oblerion",EGBA_VERSION)
 
 #define EGBA_RUN_NAME "egba"
@@ -18,7 +18,6 @@
 #define SAVING_MAX_NUMBER 50
 #define SAVING_MAX_STRING 50
 
-// TODO: edit UICONFIG -> raygui
 char UICONFIG_Timer();
 char UICONFIG_GetActive();
 void UICONFIG_SetActive(char c);
@@ -97,5 +96,32 @@ void Atlas_Init();
 void Atlas_UpdatePalette(struct Palette* palettes);
 void Atlas_UpdateSprite(struct Sprite* sprites);
 void Atlas_DrawPalette(int id, int x, int y, int scale);
-void Atlas_DrawSprite(int id,int x,int y,int scale);
+void Atlas_DrawSprite(int id,int x,int y,int scale,int rot);
 void Atlas_Free();
+
+#define EGBA_MAX_SOUND 20
+#define EGBA_MAX_MUSIC 20
+struct segba_music
+{
+    Sound sounds[EGBA_MAX_SOUND];
+    char sounds_name[EGBA_MAX_SOUND][35];
+    Music musics[EGBA_MAX_MUSIC];
+    char musics_name[EGBA_MAX_MUSIC][35];
+    int music_id_play;
+};
+void Music_Init();
+int Music_GetNewSound();
+int Music_GetNewMusic();
+void Music_LoadSound(const char* ssound);
+void Music_LoadMusic(const char* smusic);
+void Music_PlaySound(const char* sid);
+void Music_PlaySound_id(int i);
+void Music_PlayMusic(const char* sid);
+void Music_PlayMusic_id(int i);
+void Music_UpdateMusic();
+void Music_PauseMusic();
+void Music_StopMusic();
+void Music_Free();
+void Music_LoadDir(const char* sdir);
+// Music m = LoadMusicStream();
+// Sound s = LoadSoundFromWave()

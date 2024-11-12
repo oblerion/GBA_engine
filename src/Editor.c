@@ -18,8 +18,6 @@
 #include "styles/style_sunny.h"             // raygui style: sunny
 #include "styles/style_enefete.h"           // raygui style: enefete
 
-// TODO: bug update project after build egba
-// TODO: update itchio page
 
 void StyleLoader(int pid)
 {
@@ -246,14 +244,17 @@ int UI_BUTTONSPRITE_Draw(struct UI_BUTTONSPRITE btnspr)
     int ret=0;
     if(btnspr.visible)
     {
-        Atlas_DrawSprite( btnspr.id_sprite,btnspr.x,btnspr.y,btnspr.scale);
+        Atlas_DrawSprite( btnspr.id_sprite,btnspr.x,btnspr.y,btnspr.scale,0);
         int ix = GetMouseX();
         int iy = GetMouseY();
         if(_MATH_collide(ix,iy,1,1,
             btnspr.x,btnspr.y,16*btnspr.scale,16*btnspr.scale)==1)
         {
             if(IsMouseButtonDown(0)) ret = 1;
-            DrawRectangle(btnspr.x,btnspr.y,16*btnspr.scale,16*btnspr.scale,(Color){255,255,255,100});
+            DrawRectangle(
+                btnspr.x-btnspr.scale*8,
+                btnspr.y-btnspr.scale*8,
+                16*btnspr.scale,16*btnspr.scale,(Color){255,255,255,100});
         }
     }
     return ret;
@@ -298,10 +299,13 @@ void UI_Sprite_Init()
     for(int y=0;y<size;y++)
     for(int x=0;x<size;x++)
     {
-       UISprite_btnspr[(size*y)+x] = UI_BUTTONSPRITE(440+(x*UISprite_btnspr_size*16),
-        30+(y*UISprite_btnspr_size*16),
+       UISprite_btnspr[(size*y)+x] = UI_BUTTONSPRITE(
+        440+(x*UISprite_btnspr_size*16 + (UISprite_btnspr_size*8)),
+        30+(y*UISprite_btnspr_size*16 +
+        (UISprite_btnspr_size*8)),
         UISprite_btnspr_size,
-        (size*y)+x);
+        (size*y)+x
+    );
     }
        // fond spr
     UISprite_sprfond = LoadTextureFromImage(GenImageColor(26*16,26*16,BLACK));
@@ -323,7 +327,7 @@ int UI_Sprite_Draw()
 			UISprite_curantsprite=id;
         }
     }
-    Atlas_DrawSprite(UISprite_curantsprite,2,30,UISprite_btncol_size);
+    Atlas_DrawSprite(UISprite_curantsprite,2+8*UISprite_btncol_size,30+8*UISprite_btncol_size,UISprite_btncol_size,0);
     return ret;
 }
 
@@ -331,9 +335,6 @@ void UI_Sprite_Free()
 {
     UnloadTexture(UISprite_sprfond);
 }
-
-
-
 
 
 // void UI_Script_Save(struct sdata *sdata)
@@ -520,6 +521,34 @@ Project PROJECT_Init(const char* pname)
 	}
 	return spjt;
 }
+void BROWSER_Scan();
+void PROJECT_Rename(Project pjt,const char* sstr)
+{
+#if defined(__linux) || defined(_WIN32)
+#if defined(__linux)
+    const char* CC = "mv";
+#elif defined(_WIN32)
+    const char* CC = "rename";
+#endif
+    if(!TextIsEqual(pjt.name,sstr))
+    {
+        if(pjt.islua==1)
+            system(TextFormat("%s %s %s.lua",CC,PROJECT_GetFileLua(pjt),sstr));
+        if(pjt.ispng==1)
+            system(TextFormat("%s %s %s.png",CC,PROJECT_GetFilePng(pjt),sstr));
+        if(pjt.isegba==1)
+            system(TextFormat("%s %s %s.egba",CC,PROJECT_GetFileEgba(pjt),sstr));
+
+        if(FileExists(TextFormat("%s.sav",pjt.name)))
+        {
+            system(TextFormat("%s %s.sav %s.sav",CC,pjt.name,sstr));
+        }
+
+        strcpy(pjt.name,sstr);
+        BROWSER_Scan();
+    }
+#endif
+}
 
 #define BROWSER_PROJECT_MAX_H 24
 struct sbrowser
@@ -627,7 +656,7 @@ void BROWSER_DelProject(const char* name)
 #elif defined(WIN32)
 	const char* CMD_RM = "del";
 #endif
-
+#if defined (__linux) || defined(WIN32)
 	for(int i=0;i<_BROWSER.project_nb;i++)
 	{
 		if(TextIsEqual(name,_BROWSER.list[i].name))
@@ -646,6 +675,7 @@ void BROWSER_DelProject(const char* name)
 			break;
 		}
 	}
+#endif
 }
 
 void BROWSER_Init()
@@ -663,7 +693,7 @@ int BROWSER_Draw()
 
     if(state_uibrowser.ButtonDocPressed)
     {
-        OpenURL("./egba_manual_a1.7.pdf");//"https://oblerion.itch.io/gba-engine");
+        OpenURL(TextFormat("./egba_manual_%s.pdf",EGBA_VERSION));//"https://oblerion.itch.io/gba-engine");
     }
         //
     if(!UICONFIG_GetActive())
@@ -738,24 +768,26 @@ struct suiproject
 	char isactive;
     float timer;
     // texture img ui
-    Texture spr;
-    Texture lua;
-    Texture egba;
+    // Texture spr;
+    // Texture lua;
+    // Texture egba;
     char islock;
+    char istextedit;
 }_UIPROJECT;
 
 
-void UIPROJECT_LoadIcons()
-{
-	_UIPROJECT.spr = LoadTextureFromImage(imgspr);
-    _UIPROJECT.lua = LoadTextureFromImage(imglua);
-    _UIPROJECT.egba = LoadTextureFromImage(imgegba);
-}
+// void UIPROJECT_LoadIcons()
+// {
+// 	_UIPROJECT.spr = LoadTextureFromImage(imgspr);
+//     _UIPROJECT.lua = LoadTextureFromImage(imglua);
+//     _UIPROJECT.egba = LoadTextureFromImage(imgegba);
+// }
 void UIPROJECT_Init(int idproject)
 {
-	_UIPROJECT.id=idproject;
-	_UIPROJECT.isactive=1;
+	_UIPROJECT.id = idproject;
+	_UIPROJECT.isactive = 1;
     _UIPROJECT.timer = 0.001f;
+    _UIPROJECT.istextedit = 0;
 	Project pjt = _BROWSER.list[idproject];
 	if(pjt.islua)
 	{
@@ -810,7 +842,8 @@ void _UIPROJECT_StatelockEGBA(Project lproject)
         state_uiprojectlock.WindowBox000Active=true;
 
     }
-    if(state_uiprojectlock.ButtonLoadPressed)
+    if(state_uiprojectlock.ButtonLoadPressed ||
+        (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E)))
     {
         puts("[EGBA] : sprite/script -> egba ...");
         PROJECT_BuildEgba(lproject,0);
@@ -847,7 +880,22 @@ void _UIPROJECT_StateEGBA(Project lproject)
         state_uiproject.WindowBox000Active=true;
 
     }
-    if(state_uiproject.ButtonLoadPressed)
+    if(state_uiproject.TextBoxNameEditMode==true)
+    {
+        if(!_UIPROJECT.istextedit)
+        {
+            _UIPROJECT.istextedit=1;
+        }
+    }
+    else if(_UIPROJECT.istextedit)
+    {
+        _UIPROJECT.istextedit=0;
+        PROJECT_Rename(lproject,state_uiproject.TextBoxNameText);
+    }
+
+    if( state_uiproject.ButtonLoadPressed ||
+        (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_E))
+    )
     {
         puts("[EGBA] : sprite/script -> egba ...");
         PROJECT_BuildEgba(lproject,0);
@@ -897,6 +945,18 @@ void _UIPROJECT_StatenoEGBA(Project lproject)
         _UIPROJECT.isactive=0;
         state_uiprojectnoegba.WindowBox000Active=true;
 
+    }
+    if(state_uiprojectnoegba.TextBoxNameEditMode==true)
+    {
+        if(!_UIPROJECT.istextedit)
+        {
+            _UIPROJECT.istextedit=1;
+        }
+    }
+    else if(_UIPROJECT.istextedit)
+    {
+        _UIPROJECT.istextedit=0;
+        PROJECT_Rename(lproject,state_uiprojectnoegba.TextBoxNameText);
     }
     if(state_uiprojectnoegba.ButtonLoadPressed)
     {
@@ -958,6 +1018,18 @@ void _UIPROJECT_StateNoD(Project lproject)
         _UIPROJECT.isactive=0;
         state_uiprojectnod.WindowBox000Active=true;
 
+    }
+    if(state_uiprojectnod.TextBoxNameEditMode==true)
+    {
+        if(!_UIPROJECT.istextedit)
+        {
+            _UIPROJECT.istextedit=1;
+        }
+    }
+    else if(_UIPROJECT.istextedit)
+    {
+        _UIPROJECT.istextedit=0;
+        PROJECT_Rename(lproject,state_uiprojectnod.TextBoxNameText);
     }
     if(state_uiprojectnod.ButtonImportPressed ||
     (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_I)))
@@ -1127,12 +1199,12 @@ void UIPROJECT_Draw()
 	}
 }
 
-void UIPROJECT_Free()
-{
-	UnloadTexture(_UIPROJECT.lua);
-	UnloadTexture(_UIPROJECT.spr);
-	UnloadTexture(_UIPROJECT.egba);
-}
+// void UIPROJECT_Free()
+// {
+// 	UnloadTexture(_UIPROJECT.lua);
+// 	UnloadTexture(_UIPROJECT.spr);
+// 	UnloadTexture(_UIPROJECT.egba);
+// }
 
 #include "Editor.h"
 char Editor_Init(int narg,char** sarg)
@@ -1147,7 +1219,7 @@ char Editor_Init(int narg,char** sarg)
         Data_Palette_Init();
         UI_Sprite_Init();
         Data_Script_Init();
-        UIPROJECT_LoadIcons();
+        //UIPROJECT_LoadIcons();
         BROWSER_Init();
         return 1;
     }
@@ -1178,6 +1250,6 @@ void Editor_Free()
 {
     // free editor
     UI_Sprite_Free();
-    UIPROJECT_Free();
+    //UIPROJECT_Free();
     Atlas_Free();
 }

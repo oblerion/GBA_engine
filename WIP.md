@@ -29,4 +29,8 @@
 - [x] launch script/egba lua
 - [x] entry point
 - [x] read extern save
-- [ ] rename project
+- [x] rename project
+
+
+- [x] (lua) deltatime
+- [x] (lua) sprite rotate 0 1 2 3

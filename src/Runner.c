@@ -9,11 +9,60 @@ char UIRun_isdebug=0;
 int UIRun_paletteid=0;
 char UIRun_ext[5];
 char UIRun_name[50];
+float UIRun_deltatime=0.0f;
 struct CLUA UIRun_clua;
 
 struct Palette GetPalette()
 {
     return Data_Palette_Get(UIRun_paletteid);
+}
+// music
+int rlua_music_LoadDir(clua_state* L)
+{
+    const char* lstr = lua_tostring(L,1);
+    Music_LoadDir(lstr);
+    return 0;
+}
+
+int rlua_music_PlaySound(clua_state* L)
+{
+    const char* lstr = lua_tostring(L,1);
+    Music_PlaySound(lstr);
+    return 0;
+}
+
+int rlua_music_PlaySound_Id(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    Music_PlaySound_id(id);
+    return 0;
+}
+
+int rlua_music_PlayMusic(clua_state* L)
+{
+    const char* lstr = lua_tostring(L,1);
+    Music_PlayMusic(lstr);
+    return 0;
+}
+
+int rlua_music_PlayMusic_Id(clua_state* L)
+{
+    int id = lua_tointeger(L,1);
+    printf("\nid %d",id);
+    Music_PlayMusic_id(id);
+    return 0;
+}
+
+int rlua_music_PauseMusic(clua_state* L)
+{
+    Music_PauseMusic();
+    return 0;
+}
+
+int rlua_music_StopMusic(clua_state* L)
+{
+    Music_StopMusic();
+    return 0;
 }
 
 // interverse
@@ -161,6 +210,12 @@ int rlua_trace(clua_state* L)
     return 0;
 }
 
+int rlua_deltatime(clua_state* L)
+{
+    lua_pushnumber(L,UIRun_deltatime);
+    return 1;
+}
+
 int rlua_pal(clua_state* L)
 {
     int id = lua_tointeger(L,1);
@@ -199,8 +254,9 @@ int rlua_drawsprite(clua_state* L)
     int x = lua_tonumber(L,2);
     int y = lua_tonumber(L,3);
     int scale = lua_tointeger(L,4);
+    int rot = lua_tointeger(L,5);
     if(scale == 0) scale = 2;
-    Atlas_DrawSprite(id,x,y,scale);
+    Atlas_DrawSprite(id,x,y,scale,rot);
     return 0;
 }
 
@@ -350,6 +406,15 @@ void _UI_Runner_functionpush(int (*pfunc)(clua_state*),const char* name)
 void UI_Runner()
 {
     UIRun_clua = CLUA();
+
+    _UI_Runner_functionpush(rlua_music_LoadDir,"music_loaddir");
+    _UI_Runner_functionpush(rlua_music_PlaySound,"music_playsound");
+    _UI_Runner_functionpush(rlua_music_PlaySound_Id,"music_playsound_id");
+    _UI_Runner_functionpush(rlua_music_PlayMusic,"music_playmusic");
+    _UI_Runner_functionpush(rlua_music_PlayMusic_Id,"music_playmusic_Id");
+    _UI_Runner_functionpush(rlua_music_PauseMusic,"music_pausemusic");
+    _UI_Runner_functionpush(rlua_music_StopMusic,"music_stopmusic");
+
     _UI_Runner_functionpush(rlua_rsave_bool_ext,"rsave_bool_ext");
     _UI_Runner_functionpush(rlua_rsave_string_ext,"rsave_string_ext");
     _UI_Runner_functionpush(rlua_rsave_numb_ext,"rsave_numb_ext");
@@ -361,6 +426,8 @@ void UI_Runner()
     _UI_Runner_functionpush(rlua_wsave_string,"wsave_string");
     _UI_Runner_functionpush(rlua_rsave_numb,"rsave_numb");
     _UI_Runner_functionpush(rlua_wsave_numb,"wsave_numb");
+
+    _UI_Runner_functionpush(rlua_deltatime,"deltatime");
     _UI_Runner_functionpush(rlua_cls,"cls");
     _UI_Runner_functionpush(rlua_drawtext,"text");
     _UI_Runner_functionpush(rlua_drawsprite,"spr");
@@ -442,6 +509,7 @@ void Runner_Init(int narg,char** sarg)
     }
     if(narg==2)
     {
+
         if(Runner_Load(sarg[1]))
         {
         // runner init
@@ -472,6 +540,8 @@ char Runner_IsDown()
 
 void Runner_Draw()
 {
+    UIRun_deltatime = GetFrameTime();
+    Music_UpdateMusic();
     ClearBackground(WHITE);//UICONFIG_COL1());
     if(CLUA_iferror(&UIRun_clua))
     {

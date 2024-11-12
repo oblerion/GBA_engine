@@ -111,14 +111,14 @@ GuiUIBrowserState InitGuiUIBrowser(void)
     state.layoutRecs[0] = (Rectangle){ 0, 0, 960, 720 };
     state.layoutRecs[1] = (Rectangle){ 8, 48, 944, 664 };
     state.layoutRecs[2] = (Rectangle){ 40, 104, 712, 576 };
-    state.layoutRecs[3] = (Rectangle){ 784, 16, 80, 24 };
-    state.layoutRecs[4] = (Rectangle){ 880, 16, 72, 24 };
+    state.layoutRecs[3] = (Rectangle){ 704, 16, 80, 24 };
+    state.layoutRecs[4] = (Rectangle){ 808, 16, 72, 24 };
     state.layoutRecs[5] = (Rectangle){ 792, 168, 128, 40 };
     state.layoutRecs[6] = (Rectangle){ 40, 80, 712, 24 };
     state.layoutRecs[7] = (Rectangle){ 792, 104, 128, 40 };
     state.layoutRecs[8] = (Rectangle){ 376, 80, 120, 24 };
     state.layoutRecs[9] = (Rectangle){ 792, 232, 128, 40 };
-    state.layoutRecs[10] = (Rectangle){ 688, 16, 80, 24 };
+    state.layoutRecs[10] = (Rectangle){ 600, 16, 80, 24 };
 
     // Custom variables initialization
 

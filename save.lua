@@ -1,4 +1,6 @@
-
+music_loaddir("asset")
+music_playsound("laserShoot")
+music_playmusic("Ghost_Zenith")
 function collide(x,y,w,h,x2,y2,w2,h2)
     if x + w > x2 and
     y + h > y2 and
@@ -57,12 +59,13 @@ function BulletManager_draw(bulman)
     trace("id "..tostring(n).."x "..tostring(v.x).." y "..tostring(v.y))
     Bullet_draw(v)
   end
-  trace("-------------------")
+  --trace("-------------------")
 end
 
 local player = Player(23,423)
 local bulman = BulletManager()
 local timer_btn=0
+
 
 function EGBA()
 --    local x,y,btn1,btn3,btn2 = mouse()
@@ -89,6 +92,7 @@ function EGBA()
     for i=#bulman,1,-1 do
       if bulman[i].y < 0 then
         table.remove(bulman,i)
+        music_stopmusic("Ghost_Zenith")
       else
         bulman[i].y = bulman[i].y-2
       end

@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct segba_saving egba_saving;
-struct segba_data egba_data;
-struct segba_atlas egba_atlas;
+struct segba_saving egba_saving={0};
+struct segba_data egba_data={0};
+struct segba_atlas egba_atlas={0};
 
 struct sconfig
 {
@@ -553,15 +553,196 @@ void Atlas_DrawPalette(int id, int x, int y, int scale)
 
 }
 
-void Atlas_DrawSprite(int id,int x,int y,int scale)
+void Atlas_DrawSprite(int id,int x,int y,int scale,int rot)
 {
     DrawTexturePro(egba_atlas.sprites,
         (Rectangle){(id%16)*16,(id/16)*16,16,16},
-        (Rectangle){x,y,16*scale,16*scale},(Vector2){0,0},0,WHITE);
+        (Rectangle){x,y,16*scale,16*scale},(Vector2){8*scale,8*scale},rot*90,WHITE);
 }
 
 void Atlas_Free()
 {
     UnloadTexture(egba_atlas.palettes);
     UnloadTexture(egba_atlas.sprites);
+}
+
+struct segba_music egba_music;
+//TODO: music gard id out range
+void Music_Init()
+{
+    InitAudioDevice();
+    SetMasterVolume(0.5);
+    egba_music.music_id_play=-1;
+    for(int i=0;i<EGBA_MAX_SOUND;i++)
+    {
+        egba_music.sounds_name[i][0]='\0';
+    }
+    for(int i=0;i<EGBA_MAX_MUSIC;i++)
+    {
+        egba_music.musics_name[i][0]='\0';
+    }
+}
+
+int Music_GetNewSound()
+{
+    for(int i=0;i<EGBA_MAX_SOUND;i++)
+    {
+        if(egba_music.sounds_name[i][0]=='\0')
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+int Music_GetNewMusic()
+{
+    for(int i=0;i<EGBA_MAX_MUSIC;i++)
+    {
+        if(egba_music.musics_name[i][0]=='\0')
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+void Music_LoadSound(const char* ssound)
+{
+    if(TextIsEqual(GetFileExtension(ssound),".wav"))
+    {
+        int id = Music_GetNewSound();
+        strcpy(egba_music.sounds_name[id],GetFileNameWithoutExt(ssound));
+        Wave wv = LoadWave(ssound);
+        egba_music.sounds[id] = LoadSoundFromWave(wv);
+        UnloadWave(wv);
+        printf("\n[EGBA] : load sound %s id %d\n",egba_music.sounds_name[id],id);
+    }
+}
+void Music_LoadMusic(const char* smusic)
+{
+    if(TextIsEqual(GetFileExtension(smusic),".mp3") ||
+        TextIsEqual(GetFileExtension(smusic),".ogg")
+    )
+    {
+        int id = Music_GetNewMusic();
+        strcpy(egba_music.musics_name[id],GetFileNameWithoutExt(smusic));
+        egba_music.musics[id] = LoadMusicStream(smusic);
+        printf("\n[EGBA] : load music %s id %d\n",egba_music.musics_name[id],id);
+    }
+}
+void Music_PlaySound(const char* sid)
+{
+    for(int i=0;i<EGBA_MAX_SOUND;i++)
+    if(TextIsEqual(egba_music.sounds_name[i],sid))
+        PlaySound(egba_music.sounds[i]);
+}
+
+void Music_PlaySound_id(int i)
+{
+    if(i>-1 && i<EGBA_MAX_SOUND)
+    PlaySound(egba_music.sounds[i]);
+}
+
+void Music_PlayMusic(const char* sid)
+{
+    for(int i=0;i<EGBA_MAX_MUSIC;i++)
+    if(TextIsEqual(egba_music.musics_name[i],sid))
+    {
+        if(egba_music.music_id_play==-1)
+        {
+            PlayMusicStream(egba_music.musics[i]);
+            egba_music.music_id_play=i;
+        }
+        else if(egba_music.music_id_play==i)
+        {
+            ResumeMusicStream(egba_music.musics[i]);
+        }
+        else
+        {
+            StopMusicStream(egba_music.musics[i]);
+            PlayMusicStream(egba_music.musics[i]);
+            egba_music.music_id_play=i;
+        }
+        break;
+    }
+
+}
+
+void Music_PlayMusic_id(int i)
+{
+    if(i>-1 && i<EGBA_MAX_MUSIC)
+    {
+        if(egba_music.music_id_play==-1)
+        {
+            PlayMusicStream(egba_music.musics[i]);
+            egba_music.music_id_play=i;
+        }
+        else if(egba_music.music_id_play==i)
+        {
+            ResumeMusicStream(egba_music.musics[i]);
+        }
+        else
+        {
+            StopMusicStream(egba_music.musics[i]);
+            PlayMusicStream(egba_music.musics[i]);
+            egba_music.music_id_play=i;
+        }
+    }
+
+}
+void Music_UpdateMusic()
+{
+    if(egba_music.music_id_play!=-1)
+    {
+        UpdateMusicStream(egba_music.musics[egba_music.music_id_play]);
+        if(!IsMusicStreamPlaying(egba_music.musics[egba_music.music_id_play]))
+        {
+            egba_music.music_id_play=-1;
+        }
+    }
+}
+void Music_PauseMusic()
+{
+    if(egba_music.music_id_play!=-1)
+    {
+        PauseMusicStream(egba_music.musics[egba_music.music_id_play]);
+        egba_music.music_id_play=-1;
+    }
+}
+void Music_StopMusic()
+{
+    if(egba_music.music_id_play!=-1)
+    {
+        StopMusicStream(egba_music.musics[egba_music.music_id_play]);
+        egba_music.music_id_play=-1;
+    }
+}
+void Music_Free()
+{
+    for(int i=0;i<EGBA_MAX_SOUND;i++)
+    {
+        if(egba_music.sounds_name[i][0]!='\0')
+        {
+            egba_music.sounds_name[i][0]='\0';
+            UnloadSound(egba_music.sounds[i]);
+        }
+    }
+    for(int i=0;i<EGBA_MAX_MUSIC;i++)
+    {
+        if(egba_music.musics_name[i][0]!='\0')
+        {
+            egba_music.musics_name[i][0]='\0';
+            UnloadMusicStream(egba_music.musics[i]);
+        }
+    }
+    CloseAudioDevice();
+}
+void Music_LoadDir(const char* sdir)
+{
+    FilePathList files = LoadDirectoryFiles(sdir);
+    for(int i=0;i<files.count;i++)
+    {
+        Music_LoadSound(files.paths[i]);
+        Music_LoadMusic(files.paths[i]);
+    }
+    UnloadDirectoryFiles(files);
 }

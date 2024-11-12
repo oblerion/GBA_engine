@@ -50,6 +50,8 @@ int main(int narg,char** sarg)
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
 
     char isrun = 0;
+    Music_Init();
+    Music_LoadDir("asset");
     if(!EntryPoint(&isrun))
     {
         if(!Editor_Init(narg,sarg))
@@ -58,6 +60,7 @@ int main(int narg,char** sarg)
             Runner_Init(narg,sarg);
         }
     }
+
 
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -70,6 +73,7 @@ int main(int narg,char** sarg)
     }
     Editor_Free();
     Runner_Free();
-    CloseWindow();        // Close window and OpenGL
+    Music_Free();
+    CloseWindow();   // Close window and OpenGL
     return 0;
 }
