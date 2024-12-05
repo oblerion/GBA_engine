@@ -44,3 +44,7 @@ build/win86/clua.o
 build/win86/editor.o
 build/win86/main.o
 build/win86/runner.o
+build/win86/egba_editor.o
+build/win86/egba_runner.o
+build/win86/egba.o
+build/win86/main.o
