@@ -96,19 +96,23 @@ function link(){
 }
 
 if [ $# -eq 0 ];then 
-# default
+# default linux ./make
 	rm -f $TEXEC;
 	init "$CC" "$INC" "$CFLAGS" "$EXEC" "$DOBJ";
 	comp;
 	link;
-
+elif [ "$1" == "win" ];then
+# on window ./make win
+	init "$CC" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
+	comp;
+	link;
 elif [ "$1" == "w" ];then
+# linux to window ./make w
 	init "$CC2" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
 	comp;
 	link;
 elif [ "$1" == "web" ];then
 	DEXEC="build/web"
-#	emcc -o game.html main.c -Os -Wall -I${RAYLIBWEB}/include -L${RAYLIBWEB}/lib -llibraylib.a -s USE_GLFW=3 -DPLATFORM_WEB
 	for n in $DEXEC/* ;do
 		if [ $n != "$DEXEC/favicon.ico" ] && [ $n != "$DEXEC/index.html" ];then
 			rm -f $n
