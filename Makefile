@@ -3,7 +3,7 @@
 # LINUX
 # ./make
 # WINDOW
-# ./make win 
+# ./make
 
 all:
 	./make	
