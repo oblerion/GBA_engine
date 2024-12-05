@@ -6,5 +6,5 @@
 # ./make win 
 
 all:
-	./make 
+	./make	
 

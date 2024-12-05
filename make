@@ -95,17 +95,22 @@ function link(){
 	fi;
 }
 
+OS="`uname`";
 if [ $# -eq 0 ];then 
-# default linux ./make
-	rm -f $TEXEC;
-	init "$CC" "$INC" "$CFLAGS" "$EXEC" "$DOBJ";
-	comp;
-	link;
-elif [ "$1" == "win" ];then
-# on window ./make win
-	init "$CC" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
-	comp;
-	link;
+	if [ $OS == "Linux" ];then
+	# default linux ./make
+		rm -f $TEXEC;
+		init "$CC" "$INC" "$CFLAGS" "$EXEC" "$DOBJ";
+		comp;
+		link;
+	fi
+	if [ $OS == "Windows" ];then
+	# default window ./make
+		rm -f $EXEC2;
+		init "$CC" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
+		comp;
+		link;
+	fi
 elif [ "$1" == "w" ];then
 # linux to window ./make w
 	init "$CC2" "$INC2" "$CFLAGS2" "$EXEC2" "$DOBJ2";
