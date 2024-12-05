@@ -1,6 +1,6 @@
 
 # Build
 ## window
-./make win
+./make
 ## linux
 ./make
