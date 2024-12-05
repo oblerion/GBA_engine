@@ -33,7 +33,10 @@
 typedef struct {
     bool WindowBox000Active;
     int ComboBox001Active;
-    Rectangle layoutRecs[3];
+    int ComboBox003Active;
+
+    Rectangle layoutRecs[5];
+    char gamepad_name[100];
 
     // Custom state variables (depend on development software)
     // NOTE: This variables should be added manually if required
@@ -92,12 +95,16 @@ GuiUIConfigState InitGuiUIConfig(void)
 {
     GuiUIConfigState state = { 0 };
 
+    state.gamepad_name[0] = '\0';
     state.WindowBox000Active = true;
     state.ComboBox001Active = 0;
+    state.ComboBox003Active = 0;
 
     state.layoutRecs[0] = (Rectangle){ 0, 0, 960, 720 };
     state.layoutRecs[1] = (Rectangle){ 72, 56, 848, 24 };
-    state.layoutRecs[2] = (Rectangle){ 16, 56, 48, 24 };
+    state.layoutRecs[2] = (Rectangle){ 456, 32, 48, 24 };
+    state.layoutRecs[3] = (Rectangle){ 72, 112, 848, 24 };
+    state.layoutRecs[4] = (Rectangle){ 456, 88, 64, 24 };
 
     // Custom variables initialization
 
@@ -109,8 +116,10 @@ void GuiUIConfig(GuiUIConfigState *state)
     if (state->WindowBox000Active)
     {
         state->WindowBox000Active = !GuiWindowBox(state->layoutRecs[0], "UI Config");
-        GuiComboBox(state->layoutRecs[1],"default;Jungle;Candy;Lavanda;Cyber;Terminal;Ashes;Bluish;Dark;Cherry;Sunny;Enefete", &state->ComboBox001Active);
+        GuiComboBox(state->layoutRecs[1], "default;Jungle;Candy;Lavanda;Cyber;Terminal;Ashes;Bluish;Dark;Cherry;Sunny;Enefete", &state->ComboBox001Active);
         GuiLabel(state->layoutRecs[2], "Theme :");
+        GuiComboBox(state->layoutRecs[3], state->gamepad_name, &state->ComboBox003Active);
+        GuiLabel(state->layoutRecs[4], "Gamepad :");
     }
 }
 

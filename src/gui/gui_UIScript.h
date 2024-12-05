@@ -18,7 +18,7 @@
 *   usage in any other form by expresely written permission.
 *
 **********************************************************************************************/
-#include "../EGBA.h"
+#include "../egba.h"
 #include "raylib.h"
 
 // WARNING: raygui implementation is expected to be defined before including this header

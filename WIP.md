@@ -34,3 +34,9 @@
 
 - [x] (lua) deltatime
 - [x] (lua) sprite rotate 0 1 2 3
+
+## gamepad
+- [x] gamepad in config
+- [x] btn / btnp test gamepad
+
+## sprite editor / script editor
