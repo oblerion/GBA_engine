@@ -1,10 +1,6 @@
 #! /bin/bash
 
-# LINUX
-# ./make
-# WINDOW
-# ./make
-
-all:
-	./make	
-
+all: clean
+	cd src && make
+clean:
+	cd src && make clean
